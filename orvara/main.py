@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """
+update for Gaia acceleration running -- raise warning for missing hip1
 Orbit fitting code. The run function is the console entry point,
 accessed by calling fit_orbit from the command line.
 """
@@ -18,6 +19,7 @@ from astropy.coordinates import Angle
 import sys
 import re
 import random
+import warnings  # <-- added
 from orvara import orbit
 from orvara.config import parse_args
 from orvara.format_fits import make_header, pack_cols
@@ -69,7 +71,7 @@ def set_initial_parameters(start_file, ntemps, nplanets, nwalkers, njit=1,
     
     bounds = [[0, minjit, maxjit],   # jitter
               [1, 1e-4, 1e3],        # mpri (Solar masses)
-              [2, 1e-4, 1e3],        # msec (Solar masses)
+              [2, 1e-5, 1e3],        # msec (Solar masses)
               [3, 1e-5, 2e5],        # semimajor axis (AU)
               [6, 1e-5, np.pi],      # inclination (radians)
               [7, -np.pi, 3*np.pi],  # longitude of ascending node (rad)
@@ -124,8 +126,15 @@ def initialize_data(config, companion_gaia):
                 gaia_mission_length_yrs = 2.76
         else:
             raise ValueError("Cannot match %s to either DR2 or eDR3, or DR3 based on RA epoch of Gaia" % (HGCAFile))
-    except:
-        raise ValueError("Cannot access HIP 1 in HGCA file" + HGCAFile)
+    except Exception:
+        warnings.warn(
+            f"\nWARNING: HIP 1 is missing in HGCA file '{HGCAFile}'.\n"
+            "This is normal ONLY when using a 1-star Gaia-acceleration file.\n"
+            "If you are using a full HGCA_vEDR3 catalog instead, this indicates a setup issue.\n",
+            RuntimeWarning)
+        # Fallback assumption appropriate for Gaia DR3/eDR3 epoch.
+        HGCAVersion = 'GaiaeDR3'
+        gaia_mission_length_yrs = 2.76
 
     RVFile = config.get('data_paths', 'RVFile', fallback='')
     relRVFile = config.get('data_paths', 'relRVFile', fallback='')

@@ -36,6 +36,7 @@ dependencies = [
     "matplotlib>=3.6",
     "emcee>=3.1",
     "htof>=1.2.0",
+    "ptemcee-for-orbitize>=1.1.0",
 ]
 
 [project.optional-dependencies]
@@ -56,7 +57,6 @@ include = ["orvara*"]
 
 [tool.setuptools.package-data]
 "orvara.gaia_accel" = ["templates/*.ini"]
-"orvara._vendor.ptemcee" = ["LICENSE"]
 "orvara.tests" = [
     "*.ini",
     "*.dat",

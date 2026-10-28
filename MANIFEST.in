@@ -5,7 +5,6 @@ include README.rst LICENCE CHANGES.md pyproject.toml setup.py
 include orvara/orbit.pyx
 include orvara/calcEA.h orvara/lstsq.h
 recursive-include orvara/gaia_accel/templates *.ini
-recursive-include orvara/_vendor/ptemcee LICENSE
 recursive-include orvara/tests *.ini *.dat *.txt *.fits *.csv *.d
 exclude orvara/orbit.c
 global-exclude *.so *.pyc *.pyo

@@ -17,11 +17,11 @@ Python 3.10-3.13, NumPy >= 1.24 (NumPy 2.x supported), SciPy >= 1.9,
 Astropy >= 5.1, pandas >= 1.5, Matplotlib >= 3.6, emcee >= 3.1 and
 `htof <https://github.com/gmbrandt/HTOF>`_ >= 1.2.0.
 
-ptemcee is **not** a dependency: a patched copy is bundled in
-``orvara/_vendor/ptemcee`` because the PyPI release calls ``np.float``, which
-NumPy removed in 1.24. See that package's docstring.
-
-This repository is a fork of https://github.com/t-brandt/orvara at commit 66349265, maintained at https://github.com/Realaqe/orvara.
+The parallel-tempering sampler comes from ``ptemcee-for-orbitize`` (the
+orbitize! project's maintained fork of ptemcee; it installs as the module
+``ptemcee``). Do not install the original ``ptemcee`` from PyPI alongside it:
+that release calls ``np.float``, removed in NumPy 1.24, and the two packages
+overwrite each other's files.
 
 Installation
 ============
@@ -30,7 +30,7 @@ automatically:
 
 .. code-block:: bash
 
-    git clone <this repo>
+    git clone https://github.com/t-brandt/orvara
     cd orvara
     pip install -e ".[test]"
 

@@ -1080,23 +1080,19 @@ class OrbitPlots:
                 fig = plt.figure(figsize=(4.7, 8.0))
                 ax1   = fig.add_axes((0.15, 0.55, 0.80, 0.38))
                 ax2   = fig.add_axes((0.15, 0.39, 0.80, 0.14))
-                ax_a1   = fig.add_axes((0.15, 0.21, 0.80, 0.14))
-                ax_a1oc = fig.add_axes((0.15, 0.06, 0.80, 0.12))
+                ax_a1   = fig.add_axes((0.15, 0.08, 0.80, 0.27))
                 fig1 = plt.figure(figsize=(4.7, 8.0))
                 ax3   = fig1.add_axes((0.15, 0.55, 0.80, 0.38))
                 ax4   = fig1.add_axes((0.15, 0.39, 0.80, 0.14))
-                ax_a3   = fig1.add_axes((0.15, 0.21, 0.80, 0.14))
-                ax_a3oc = fig1.add_axes((0.15, 0.06, 0.80, 0.12))
+                ax_a3   = fig1.add_axes((0.15, 0.08, 0.80, 0.27))
             else:
                 fig = plt.figure(figsize=(13, 8.0))
                 ax1     = fig.add_axes((0.08, 0.55, 0.37, 0.38))
                 ax2     = fig.add_axes((0.08, 0.39, 0.37, 0.14))
-                ax_a1   = fig.add_axes((0.08, 0.21, 0.37, 0.14))
-                ax_a1oc = fig.add_axes((0.08, 0.06, 0.37, 0.12))
+                ax_a1   = fig.add_axes((0.08, 0.08, 0.37, 0.27))
                 ax3     = fig.add_axes((0.55, 0.55, 0.37, 0.38))
                 ax4     = fig.add_axes((0.55, 0.39, 0.37, 0.14))
-                ax_a3   = fig.add_axes((0.55, 0.21, 0.37, 0.14))
-                ax_a3oc = fig.add_axes((0.55, 0.06, 0.37, 0.12))
+                ax_a3   = fig.add_axes((0.55, 0.08, 0.37, 0.27))
 
             # ── epoch arrays for observed data points ─────────────────────
             ep_mualp_obs_calendar = []
@@ -1124,9 +1120,9 @@ class OrbitPlots:
                 t1_Dec, t2_Dec, dt_Dec = t1_Dec - half, t2_Dec + half, 2 * half
             xl_RA  = [t1_RA  - dt_RA /8., t2_RA  + dt_RA /8.]
             xl_Dec = [t1_Dec - dt_Dec/8., t2_Dec + dt_Dec/8.]
-            for ax in [ax1, ax2, ax_a1, ax_a1oc]:
+            for ax in [ax1, ax2, ax_a1]:
                 ax.set_xlim(xl_RA)
-            for ax in [ax3, ax4, ax_a3, ax_a3oc]:
+            for ax in [ax3, ax4, ax_a3]:
                 ax.set_xlim(xl_Dec)
 
             orb_ml = Orbit(self, 'best')
@@ -1136,8 +1132,10 @@ class OrbitPlots:
             indx = (T > minT) * (T < maxT) > 0
 
             # ── random orbit samples ──────────────────────────────────────
+            sampled_orbits = []
             for i in range(self.num_orbits):
                 orb = Orbit(self, step=self.rand_idx[i])
+                sampled_orbits.append(orb)
                 c   = self.colormap(self.normalize(orb.colorpar))
                 ax1.plot(T[indx], orb.mu_RA[indx],  color=c, alpha=0.3)
                 ax3.plot(T[indx], orb.mu_Dec[indx], color=c, alpha=0.3)
@@ -1179,74 +1177,90 @@ class OrbitPlots:
                         facecolors=self.marker_color, edgecolors='k', zorder=300)
 
             # ── NSS acceleration panel ────────────────────────────────────
-            # Model acceleration (and jerk) at the Gaia central epoch, sampled
-            # and reduced exactly as the likelihood does -- see
-            # OrbitPlots.model_accel_jerk.
+            # The model acceleration is drawn as a function of time: the time
+            # derivative of the proper-motion curves in the panels above
+            # (black = maximum-likelihood orbit, coloured = posterior draws).
+            # The O-C below compares the DR3 *coefficient* with the model
+            # coefficient obtained by the same finite-difference reduction the
+            # likelihood uses (OrbitPlots.model_accel_jerk), so it is the
+            # quantity that enters chi^2_G.
             acc_ep_cal = self.ep_gaia_acc   # decimal year
+            Tc = T[indx]
 
-            model_accra_samples, model_accdec_samples = [], []
-            model_jerkra_samples, model_jerkdec_samples = [], []
-            for idx in self.rand_idx:
-                accra, accdec, jerkra, jerkdec = self.model_accel_jerk(idx)
-                model_accra_samples.append(accra)
-                model_accdec_samples.append(accdec)
-                model_jerkra_samples.append(jerkra)
-                model_jerkdec_samples.append(jerkdec)
+            def _accel_curve(mu):
+                """d(mu)/dt on the plotted epoch grid, mas/yr -> mas/yr^2."""
+                return np.gradient(np.asarray(mu, dtype=float)[indx], Tc)
 
-            model_accra_samples = np.array(model_accra_samples)
-            model_accdec_samples = np.array(model_accdec_samples)
-            model_jerkra_samples = np.array(model_jerkra_samples)
-            model_jerkdec_samples = np.array(model_jerkdec_samples)
+            for orb in sampled_orbits:
+                c = self.colormap(self.normalize(orb.colorpar))
+                ax_a1.plot(Tc, _accel_curve(orb.mu_RA),  color=c, alpha=0.3)
+                ax_a3.plot(Tc, _accel_curve(orb.mu_Dec), color=c, alpha=0.3)
+            ml_curve_RA, ml_curve_Dec = _accel_curve(orb_ml.mu_RA), _accel_curve(orb_ml.mu_Dec)
+            ax_a1.plot(Tc, ml_curve_RA,  color='black',
+                       label=r'Model $\mathrm{d}\mu/\mathrm{d}t$')
+            ax_a3.plot(Tc, ml_curve_Dec, color='black',
+                       label=r'Model $\mathrm{d}\mu/\mathrm{d}t$')
 
-            # maximum-likelihood model acceleration and jerk, for the O-C
+            # maximum-likelihood model coefficients (window reduction), quoted in the jerk annotation
             best_step = int(np.where(
                 self.chain['lnp'] == np.amax(self.chain['lnp']))[0][0])
             ml_accra, ml_accdec, ml_jerkra, ml_jerkdec = \
                 self.model_accel_jerk(best_step)
 
-            # draw model posterior band on acc panels
             nss_color = '#1f77b4'
-            for ax_a, samples in [(ax_a1, model_accra_samples),
-                                   (ax_a3, model_accdec_samples)]:
-                p16, p50, p84 = np.percentile(samples, [16, 50, 84])
-                xlo, xhi = ax_a.get_xlim()
-                ax_a.fill_betweenx([p16, p84], xlo, xhi, color='grey', alpha=0.25)
-                ax_a.axhline(p50, color='black', lw=1.2, label='Model median')
-                ax_a.plot([], [], color='grey', alpha=0.5, lw=6, label='Model 1σ')
-
             if self.have_nss_acc:
-                for ax_a, val, err in [
-                    (ax_a1, self.nss_accra,  self.nss_accra_err),
-                    (ax_a3, self.nss_accdec, self.nss_accdec_err)]:
+                half_window = 0.5 * getattr(self, 'dt_gaia', 2.76)   # yr
+                t_seg = acc_ep_cal + np.linspace(-half_window, half_window, 50)
+                dt_seg = t_seg - acc_ep_cal
+                for ax_a, val, err, jval, jerr in [
+                    (ax_a1, self.nss_accra,  self.nss_accra_err,
+                     self.nss_jerkra,  self.nss_jerkra_err),
+                    (ax_a3, self.nss_accdec, self.nss_accdec_err,
+                     self.nss_jerkdec, self.nss_jerkdec_err)]:
+                    # central value at the DR3 reference epoch
                     ax_a.errorbar([acc_ep_cal], [val], yerr=[err],
                                   color=nss_color, fmt='D', ecolor='black',
                                   capsize=5, markersize=7, zorder=300,
                                   label='Gaia NSS (Acc%d)' % self.gaia_npar)
+                    if self.have_nss_jerk and jval is not None:
+                        # nine-parameter solution: the DR3 model acceleration is
+                        # a + j (t - t0) across the window; draw that segment
+                        # with its 1-sigma band.
+                        seg = val + jval * dt_seg
+                        seg_err = np.sqrt(err**2 + (jerr * dt_seg)**2)
+                        ax_a.plot(t_seg, seg, color=nss_color, lw=1.5, zorder=299,
+                                  label=r'Gaia NSS $a + j\,(t-t_0)$')
+                        ax_a.fill_between(t_seg, seg - seg_err, seg + seg_err,
+                                          color=nss_color, alpha=0.3, lw=0,
+                                          label=r'Gaia NSS 1$\sigma$ envelope')
+                        ax_a.plot(t_seg, seg - seg_err, color=nss_color, lw=0.8, ls='--')
+                        ax_a.plot(t_seg, seg + seg_err, color=nss_color, lw=0.8, ls='--')
+                    else:
+                        # seven-parameter solution: constant over the window
+                        ax_a.hlines(val, t_seg[0], t_seg[-1], color=nss_color,
+                                    lw=1.5, zorder=299)
 
-                # acceleration O-C
-                oc_accra  = self.nss_accra  - ml_accra
-                oc_accdec = self.nss_accdec - ml_accdec
-                ax_a1oc.axhline(0, color='k', lw=1, ls='--', dashes=(5, 5))
-                ax_a3oc.axhline(0, color='k', lw=1, ls='--', dashes=(5, 5))
-                ax_a1oc.errorbar([acc_ep_cal], [oc_accra],  yerr=[self.nss_accra_err],
-                                 color=nss_color, fmt='D', ecolor='black',
-                                 capsize=5, markersize=7, zorder=300)
-                ax_a3oc.errorbar([acc_ep_cal], [oc_accdec], yerr=[self.nss_accdec_err],
-                                 color=nss_color, fmt='D', ecolor='black',
-                                 capsize=5, markersize=7, zorder=300)
+                # y-range from the maximum-likelihood curve and the measurement,
+                # so a few wide posterior draws cannot flatten the panel
+                for ax_a, curve, val, err in [
+                    (ax_a1, ml_curve_RA,  self.nss_accra,  self.nss_accra_err),
+                    (ax_a3, ml_curve_Dec, self.nss_accdec, self.nss_accdec_err)]:
+                    lo = min(np.min(curve), val - 2 * err)
+                    hi = max(np.max(curve), val + 2 * err)
+                    pad = 0.15 * (hi - lo) if hi > lo else 1.0
+                    ax_a.set_ylim(lo - pad, hi + pad)
 
-                # annotate measured and model jerk if Acc9
+            if self.have_nss_acc:
+                # quote measured and model jerk (Acc9) as a legend entry
                 if self.have_nss_jerk:
                     for ax_a, jval, jerr, jmod, lab in [
                         (ax_a1, self.nss_jerkra,  self.nss_jerkra_err,
                          ml_jerkra,  r'$j_{\alpha*}$'),
                         (ax_a3, self.nss_jerkdec, self.nss_jerkdec_err,
                          ml_jerkdec, r'$j_{\delta}$')]:
-                        ax_a.annotate(
-                            r'%s $= %.2f \pm %.2f$ (model %.2f) mas yr$^{-3}$'
-                            % (lab, jval, jerr, jmod),
-                            xy=(0.03, 0.07), xycoords='axes fraction',
-                            fontsize=9, color='#d62728')
+                        ax_a.plot([], [], ' ',
+                                  label=r'%s $= %.2f \pm %.2f$ (model %.2f) mas yr$^{-3}$'
+                                  % (lab, jval, jerr, jmod))
 
             # ── axis labels and formatting ─────────────────────────────────
             if self.set_limit:
@@ -1256,13 +1270,11 @@ class OrbitPlots:
 
             ax2.sharex(ax1)
             ax_a1.sharex(ax1)
-            ax_a1oc.sharex(ax1)
             ax4.sharex(ax3)
             ax_a3.sharex(ax3)
-            ax_a3oc.sharex(ax3)
-            for ax in [ax2, ax_a1, ax_a1oc]:
+            for ax in [ax2, ax_a1]:
                 ax.set_xlim(xl_RA)
-            for ax in [ax4, ax_a3, ax_a3oc]:
+            for ax in [ax4, ax_a3]:
                 ax.set_xlim(xl_Dec)
 
             ax1.set_ylabel(r'$\mu_{\alpha*}$ (mas yr$^{-1}$)',  labelpad=6, fontsize=13)
@@ -1271,16 +1283,14 @@ class OrbitPlots:
             ax4.set_ylabel('O-C (PM)',                           labelpad=6, fontsize=10)
             ax_a1.set_ylabel(r'$\alpha_{\alpha*}$ (mas yr$^{-2}$)', labelpad=6, fontsize=11)
             ax_a3.set_ylabel(r'$\alpha_{\delta}$ (mas yr$^{-2}$)',  labelpad=6, fontsize=11)
-            ax_a1oc.set_ylabel('O-C (acc)',                      labelpad=6, fontsize=10)
-            ax_a3oc.set_ylabel('O-C (acc)',                      labelpad=6, fontsize=10)
 
-            for ax in [ax1, ax3, ax2, ax4, ax_a1, ax_a3]:
+            for ax in [ax1, ax3, ax2, ax4]:
                 ax.xaxis.set_major_formatter(NullFormatter())
                 ax.xaxis.set_minor_locator(AutoMinorLocator())
                 ax.yaxis.set_minor_locator(AutoMinorLocator())
                 ax.tick_params(direction='in', which='both',
                                left=True, right=True, bottom=True, top=True)
-            for ax in [ax_a1oc, ax_a3oc]:
+            for ax in [ax_a1, ax_a3]:
                 ax.xaxis.set_minor_locator(AutoMinorLocator())
                 ax.yaxis.set_minor_locator(AutoMinorLocator())
                 ax.tick_params(direction='in', which='both',
@@ -1307,8 +1317,8 @@ class OrbitPlots:
             if self.usecolorbar:
                 if self.pm_separate:
                     for figure, axes_list, name in [
-                        (fig,  [ax1, ax2, ax_a1, ax_a1oc], 'RA_'),
-                        (fig1, [ax3, ax4, ax_a3, ax_a3oc], 'Dec_')]:
+                        (fig,  [ax1, ax2, ax_a1], 'RA_'),
+                        (fig1, [ax3, ax4, ax_a3], 'Dec_')]:
                         cbar_ax = figure.add_axes([1.55, 0.16, 0.05, 0.7])
                         cbar = figure.colorbar(self.sm, ax=cbar_ax, fraction=12)
                         cbar.ax.set_ylabel(self.cmlabel_dic[self.cmref],
@@ -1333,8 +1343,8 @@ class OrbitPlots:
                     cbar.ax.get_yaxis().labelpad = 20
                     fig.delaxes(cbar_ax)
                     try:
-                        self.align_ylabels(fig, [ax1, ax2, ax_a1, ax_a1oc], pad=0.02)
-                        self.align_ylabels(fig, [ax3, ax4, ax_a3, ax_a3oc], pad=0.02)
+                        self.align_ylabels(fig, [ax1, ax2, ax_a1], pad=0.02)
+                        self.align_ylabels(fig, [ax3, ax4, ax_a3], pad=0.02)
                     except Exception:
                         pass
                     with warnings.catch_warnings():

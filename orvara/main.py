@@ -9,9 +9,11 @@ import numpy as np
 import os
 import time
 import emcee
-# ptemcee is bundled (orvara/_vendor/ptemcee); see that package's __init__
-# for why the PyPI release cannot be used with NumPy >= 1.24.
-from orvara._vendor.ptemcee import Sampler as PTSampler
+# ptemcee-for-orbitize: the orbitize! project's maintained fork of ptemcee
+# (NumPy-2 compatible; the module is still called ``ptemcee``).
+from ptemcee import Sampler as PTSampler
+import ptemcee as _ptemcee
+PTEMCEE_SOURCE = 'ptemcee %s (ptemcee-for-orbitize)' % getattr(_ptemcee, '__version__', '?')
 from astropy.io import fits
 from htof.main import Astrometry
 from astropy.time import Time
@@ -406,7 +408,7 @@ def run():
     # run sampler without feeding it loglkwargs directly, since loglkwargs contains non-picklable C objects.
 
     # emcee dropped PTSampler in 3.0; use it only on a legacy emcee 2 install,
-    # otherwise fall back to the bundled ptemcee.
+    # otherwise use ptemcee-for-orbitize.
     legacy_pt = getattr(emcee, 'PTSampler', None)
     if legacy_pt is not None:
         use_ptemcee = False
@@ -418,7 +420,7 @@ def run():
         sample0 = PTSampler(ntemps=ntemps, nwalkers=nwalkers, dim=ndim,
                             logl=avoid_pickle_lnprob, logp=return_one,
                             threads=nthreads)
-        print('Using the bundled ptemcee sampler.')
+        print('Using the %s sampler.' % PTEMCEE_SOURCE)
 
     print("Running MCMC ... ")
     #sample0.run_mcmc(par0, nstep, **samplekwargs)

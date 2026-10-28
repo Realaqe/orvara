@@ -136,3 +136,4 @@ dmypy.json
 .pyre/
 .DS_Store
 orvara/tests/chains/
+orvara/tests/plots/

@@ -1,6 +1,24 @@
 1.2.1 (2026-09-18)
 ------------------
 
+*(added 2026-10-23, before the first release of 1.2.1)*
+
+- Proper-motion diagnostic figure: the model acceleration is now drawn as a
+  function of time -- the time derivative of the proper-motion curves in the
+  panels above (black = maximum-likelihood orbit, coloured = posterior draws) --
+  instead of a constant band. For an `Acceleration9` source the DR3 measurement
+  is drawn as the segment a + j (t - J2016.0) across the 2 x 517.5 d window with
+  its 1-sigma envelope; for `Acceleration7` as a constant over the window. The
+  acceleration O-C sub-panel has been removed; the coefficient comparison that
+  enters chi^2_G is still quoted in the jerk annotation and in the best-step
+  chi^2 output.
+- Sampler: `ptemcee-for-orbitize>=1.1.0` -- the orbitize! project's maintained
+  fork of ptemcee, carrying the same NumPy-2 fix (`np.float` -> `float`) that
+  1.2.0/1.2.1 bundled -- replaces the bundled copy, which is removed. The
+  HD 4747 B end-to-end test reproduces the published posterior with it.
+- `orvara/tests/config_Gl758.ini` restored to repository-relative paths.
+- `orvara/tests/plots/` (committed test output) removed from the repository.
+
 - **`[data_paths] relast_error_scale`**: one factor that multiplies every
   separation and position-angle uncertainty in `AstrometryFile` when it is
   read (default 1). It replaces the practice of rewriting the relative-astrometry

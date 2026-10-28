@@ -21,6 +21,7 @@ import matplotlib.colors as mcolors
 import matplotlib.cm as cm
 from matplotlib.ticker import NullFormatter
 from matplotlib.ticker import AutoMinorLocator
+from matplotlib.ticker import MaxNLocator, FormatStrFormatter
 from orvara.format_fits import pull_chain_params, burnin_chain
 
 try:
@@ -306,6 +307,10 @@ class OrbitPlots:
             ep_mualp_obs, ep_mudec_obs = ep_mualp_obs[real], ep_mudec_obs[real]
             mualp_obs, mualp_obs_err = mualp_obs[real], mualp_obs_err[real]
             mudec_obs, mudec_obs_err = mudec_obs[real], mudec_obs_err[real]
+            # With a single proper-motion epoch (a Gaia-only NSS source) the two
+            # free barycentric proper-motion parameters reproduce the Gaia value
+            # exactly, so a proper-motion O-C carries no information.
+            self.n_pm_epochs = int(np.count_nonzero(real))
 
             # ── NSS acceleration / jerk (Acc7 or Acc9) ──────────────────────
             col_names = t.names if hasattr(t, 'names') else t.dtype.names
@@ -346,6 +351,7 @@ class OrbitPlots:
 
         except Exception as e:
             self.have_pmdat    = False
+            self.n_pm_epochs   = 0
             self.have_nss_acc  = False
             self.have_nss_jerk = False
             return [None, None, None, None, None, None]
@@ -366,6 +372,19 @@ class OrbitPlots:
             offset = offset_dic = [self.chain['RV_ZP_0_ML'][step]]
         return offset_dic
 
+
+    def _year_ticks(self, ax, nbins=6):
+        """
+        Readable epoch ticks.  Over a span of 4 yr or more, label whole years
+        only and at most ~nbins of them; matplotlib's default otherwise puts a
+        label every 2.5 yr ('2012.5 2015.0 ...'), which overlap.
+        """
+        lo, hi = ax.get_xlim()
+        whole = (hi - lo) >= 4
+        ax.xaxis.set_major_locator(
+            MaxNLocator(nbins=nbins, integer=whole, steps=[1, 2, 2.5, 5, 10]))
+        if whole:
+            ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 
     def align_ylabels(self, fig, axes, pad=0.02):
         xmin = np.inf
@@ -597,6 +616,7 @@ class OrbitPlots:
             ax.set_ylim(float(self.user_ylim[0]),float(self.user_ylim[1]))
             
         ax.set_xlim(self.start_epoch, self.end_epoch)
+        self._year_ticks(ax)
         x0, x1 = ax.get_xlim()
         y0, y1 = ax.get_ylim()
         ax.set_aspect((x1-x0)/(y1-y0))
@@ -703,7 +723,7 @@ class OrbitPlots:
         
         ax1.set_xlim(min(all_RV_eps) - range_ep_obs/20., max(all_RV_eps) + range_ep_obs/20.)
         ax1.set_ylim(RV_obs_min - range_RV_obs/10., RV_obs_max + range_RV_obs/10.)
-        ax1.xaxis.set_major_formatter(NullFormatter())
+        ax1.tick_params(labelbottom=False)   # not NullFormatter: sharex shares the formatter and would blank the O-C axis too
         ax1.xaxis.set_minor_locator(AutoMinorLocator())
         ax1.yaxis.set_minor_locator(AutoMinorLocator())
         ax1.tick_params(direction='in', which='both', left=True, right=True, bottom=True, top=True)
@@ -801,7 +821,7 @@ class OrbitPlots:
             range_relsep_obs = max(self.relsep_obs)  - min(self.relsep_obs)
             ax1.set_xlim(min(ep_relAst_obs_calendar) - range_eprA_obs/8., max(ep_relAst_obs_calendar) + range_eprA_obs/8.)
             ax1.set_ylim(min(self.relsep_obs) - range_relsep_obs/2., max(self.relsep_obs) + range_relsep_obs/2.)
-            ax1.xaxis.set_major_formatter(NullFormatter())
+            ax1.tick_params(labelbottom=False)   # not NullFormatter: sharex shares the formatter and would blank the O-C axis too
             ax1.xaxis.set_minor_locator(AutoMinorLocator())
             ax1.yaxis.set_minor_locator(AutoMinorLocator())
             ax1.tick_params(direction='in', which='both', left=True, right=True, bottom=True, top=True)
@@ -818,6 +838,7 @@ class OrbitPlots:
                 ax1.set_ylim(float(self.user_ylim[0]),float(self.user_ylim[1]))
             ax2.xaxis.set_minor_locator(AutoMinorLocator())
             ax2.tick_params(direction='in', which='both', left=True, right=True, bottom=True, top=True)
+            self._year_ticks(ax2)
             ax2.set_xlabel('Epoch (year)', labelpad=6, fontsize=13)
             lab2 = ax2.set_ylabel('O-C', fontsize=13)
             #ax2.get_yaxis().set_label_coords()
@@ -851,6 +872,7 @@ class OrbitPlots:
                 
             # axes settings
             ax.set_xlim(self.start_epoch, self.end_epoch)
+            self._year_ticks(ax)
             ax.xaxis.set_minor_locator(AutoMinorLocator())
             ax.yaxis.set_minor_locator(AutoMinorLocator())
             ax.tick_params(direction='in', which='both', left=True, right=True, bottom=True, top=True)
@@ -915,7 +937,7 @@ class OrbitPlots:
             range_PA_obs = max(self.PA_obs)  - min(self.PA_obs)
             ax1.set_xlim(min(ep_relAst_obs_calendar) - range_eprA_obs/8., max(ep_relAst_obs_calendar) + range_eprA_obs/8.)
             ax1.set_ylim(min(self.PA_obs) - range_PA_obs/5., max(self.PA_obs) + range_PA_obs/5.)
-            ax1.xaxis.set_major_formatter(NullFormatter())
+            ax1.tick_params(labelbottom=False)   # not NullFormatter: sharex shares the formatter and would blank the O-C axis too
             ax1.xaxis.set_minor_locator(AutoMinorLocator())
             ax1.yaxis.set_minor_locator(AutoMinorLocator())
             ax1.tick_params(direction='in', which='both', left=True, right=True, bottom=True, top=True)
@@ -933,6 +955,7 @@ class OrbitPlots:
                 
             ax2.xaxis.set_minor_locator(AutoMinorLocator())
             ax2.tick_params(direction='in', which='both', left=True, right=True, bottom=True, top=True)
+            self._year_ticks(ax2)
             ax2.set_xlabel('Epoch (year)', labelpad=6, fontsize=13)
             ax2.set_ylabel('O-C', labelpad=6, fontsize=13)
 
@@ -963,6 +986,7 @@ class OrbitPlots:
             ax.plot(self.epoch_calendar, orb_ml.PA, color='black')
 
             ax.set_xlim(self.start_epoch, self.end_epoch)
+            self._year_ticks(ax)
             ax.xaxis.set_minor_locator(AutoMinorLocator())
             ax.yaxis.set_minor_locator(AutoMinorLocator())
             ax.tick_params(direction='in', which='both', left=True, right=True, bottom=True, top=True)
@@ -1074,6 +1098,30 @@ class OrbitPlots:
             jerkra = jerkdec = 0.0
         return accra, accdec, jerkra, jerkdec
 
+    def model_window_mean_pm(self, step='best', n=401):
+        """
+        Model proper motion averaged over the Gaia window, per coordinate.
+
+        A Gaia DR3 NSS proper motion is the mean over 2016.0 +/- 517.5 d, and the
+        likelihood compares it with (f(+T/2) - f(-T/2)) / T of the model sky
+        path (see ``orvara.orbit.calc_PMs_no_epoch_astrometry``), i.e. with the
+        time-average of mu(t), not its value at 2016.0.  For an Acceleration9
+        source the two differ by jerk (T/2)^2 / 6 (4.3 mas/yr for J1717 in Dec).
+
+        :returns: (mean mu_RA*, mean mu_Dec) in mas/yr.
+        """
+        h = 0.5 * getattr(self, 'dt_gaia', 2.76)
+        out = []
+        for ep_c, use_ra in ((self.ep_gaia_acc, True),
+                             (getattr(self, 'ep_gaia_acc_dec', self.ep_gaia_acc), False)):
+            t_cal = ep_c + np.linspace(-h, h, n)
+            jd = np.asarray(self.calendar_to_JD(t_cal), dtype=float)
+            orb = Orbit(self, step, epochs=jd)
+            mu = np.asarray(orb.mu_RA if use_ra else orb.mu_Dec, dtype=float)
+            # trapezoid mean on the uniform grid
+            out.append((0.5 * mu[0] + mu[1:-1].sum() + 0.5 * mu[-1]) / (n - 1))
+        return out[0], out[1]
+
     def proper_motions(self):
         if self.have_pmdat:
             if self.pm_separate:
@@ -1163,8 +1211,26 @@ class OrbitPlots:
                         label='Hip / Gaia PM')
 
             # ── PM O-C ────────────────────────────────────────────────────
-            dat_OC_RA  = self.mualp_obs - orb_ml_RA.mu_RA
-            dat_OC_Dec = self.mudec_obs - orb_ml_Dec.mu_Dec
+            dat_OC_RA  = np.array(self.mualp_obs - orb_ml_RA.mu_RA,  dtype=float)
+            dat_OC_Dec = np.array(self.mudec_obs - orb_ml_Dec.mu_Dec, dtype=float)
+            if self.have_nss_acc:
+                # The Gaia NSS proper motion is a window mean, so compare it with
+                # the model's window mean (what chi^2_G uses), not with mu(2016.0).
+                mean_RA, mean_Dec = self.model_window_mean_pm('best')
+                h_win = 0.5 * getattr(self, 'dt_gaia', 2.76)
+                ep_dec_c = getattr(self, 'ep_gaia_acc_dec', self.ep_gaia_acc)
+                iG_RA  = int(np.argmin(np.abs(np.asarray(ep_mualp_obs_calendar) - self.ep_gaia_acc)))
+                iG_Dec = int(np.argmin(np.abs(np.asarray(ep_mudec_obs_calendar) - ep_dec_c)))
+                dat_OC_RA[iG_RA]   = self.mualp_obs[iG_RA]  - mean_RA
+                dat_OC_Dec[iG_Dec] = self.mudec_obs[iG_Dec] - mean_Dec
+                ax1.hlines(mean_RA, self.ep_gaia_acc - h_win, self.ep_gaia_acc + h_win,
+                           colors='k', linestyles=':', lw=1.8, zorder=298,
+                           label='Model, Gaia-window mean')
+                ax3.hlines(mean_Dec, ep_dec_c - h_win, ep_dec_c + h_win,
+                           colors='k', linestyles=':', lw=1.8, zorder=298,
+                           label='Model, Gaia-window mean')
+                ax1.legend(fontsize=8, loc='best', framealpha=0.6)
+                ax3.legend(fontsize=8, loc='best', framealpha=0.6)
             ax2.errorbar(ep_mualp_obs_calendar, dat_OC_RA,
                          yerr=self.mualp_obs_err, color=self.marker_color,
                          fmt='o', ecolor='black', capsize=5, markersize=1, zorder=299)
@@ -1201,13 +1267,13 @@ class OrbitPlots:
             ax_a3.plot(Tc, ml_curve_Dec, color='black',
                        label=r'Model $\mathrm{d}\mu/\mathrm{d}t$')
 
-            # maximum-likelihood model coefficients (window reduction), quoted in the jerk annotation
-            best_step = int(np.where(
-                self.chain['lnp'] == np.amax(self.chain['lnp']))[0][0])
-            ml_accra, ml_accdec, ml_jerkra, ml_jerkdec = \
-                self.model_accel_jerk(best_step)
+            # ML coefficient comparison (OrbitPlots.model_accel_jerk) is not drawn:
+            # the red segment's slope is the measured jerk, and the numbers belong in
+            # the beststep / posterior output rather than on the figure.
 
-            nss_color = '#1f77b4'
+            nss_color = '#d62728'   # red: distinct from the viridis posterior draws
+            ENVELOPE_LABEL = r'Gaia NSS 1$\sigma$ envelope'
+            envelope_handles = {}
             if self.have_nss_acc:
                 half_window = 0.5 * getattr(self, 'dt_gaia', 2.76)   # yr
                 t_seg = acc_ep_cal + np.linspace(-half_window, half_window, 50)
@@ -1220,7 +1286,8 @@ class OrbitPlots:
                     # central value at the DR3 reference epoch
                     ax_a.errorbar([acc_ep_cal], [val], yerr=[err],
                                   color=nss_color, fmt='D', ecolor='black',
-                                  capsize=5, markersize=7, zorder=300,
+                                  markeredgecolor='black',
+                                  capsize=5, markersize=7, zorder=301,
                                   label='Gaia NSS (Acc%d)' % self.gaia_npar)
                     if self.have_nss_jerk and jval is not None:
                         # nine-parameter solution: the DR3 model acceleration is
@@ -1228,17 +1295,21 @@ class OrbitPlots:
                         # with its 1-sigma band.
                         seg = val + jval * dt_seg
                         seg_err = np.sqrt(err**2 + (jerr * dt_seg)**2)
-                        ax_a.plot(t_seg, seg, color=nss_color, lw=1.5, zorder=299,
+                        ax_a.plot(t_seg, seg, color=nss_color, lw=2.2, zorder=300,
                                   label=r'Gaia NSS $a + j\,(t-t_0)$')
-                        ax_a.fill_between(t_seg, seg - seg_err, seg + seg_err,
-                                          color=nss_color, alpha=0.3, lw=0,
-                                          label=r'Gaia NSS 1$\sigma$ envelope')
-                        ax_a.plot(t_seg, seg - seg_err, color=nss_color, lw=0.8, ls='--')
-                        ax_a.plot(t_seg, seg + seg_err, color=nss_color, lw=0.8, ls='--')
+                        env_fill = ax_a.fill_between(t_seg, seg - seg_err, seg + seg_err,
+                                                     color=nss_color, alpha=0.18, lw=0, zorder=298,
+                                                     label=ENVELOPE_LABEL)
+                        env_edge, = ax_a.plot(t_seg, seg - seg_err, color=nss_color, lw=1.3,
+                                              ls='--', zorder=299)
+                        ax_a.plot(t_seg, seg + seg_err, color=nss_color, lw=1.3, ls='--', zorder=299)
+                        # legend entry = band + dashed edge, so the dashed lines are labelled
+                        envelope_handles[ax_a] = (env_fill, env_edge)
                     else:
                         # seven-parameter solution: constant over the window
                         ax_a.hlines(val, t_seg[0], t_seg[-1], color=nss_color,
-                                    lw=1.5, zorder=299)
+                                    lw=2.2, zorder=300,
+                                    label=r'Gaia NSS $a$ (Acc7, constant)')
 
                 # y-range from the maximum-likelihood curve and the measurement,
                 # so a few wide posterior draws cannot flatten the panel
@@ -1249,18 +1320,6 @@ class OrbitPlots:
                     hi = max(np.max(curve), val + 2 * err)
                     pad = 0.15 * (hi - lo) if hi > lo else 1.0
                     ax_a.set_ylim(lo - pad, hi + pad)
-
-            if self.have_nss_acc:
-                # quote measured and model jerk (Acc9) as a legend entry
-                if self.have_nss_jerk:
-                    for ax_a, jval, jerr, jmod, lab in [
-                        (ax_a1, self.nss_jerkra,  self.nss_jerkra_err,
-                         ml_jerkra,  r'$j_{\alpha*}$'),
-                        (ax_a3, self.nss_jerkdec, self.nss_jerkdec_err,
-                         ml_jerkdec, r'$j_{\delta}$')]:
-                        ax_a.plot([], [], ' ',
-                                  label=r'%s $= %.2f \pm %.2f$ (model %.2f) mas yr$^{-3}$'
-                                  % (lab, jval, jerr, jmod))
 
             # ── axis labels and formatting ─────────────────────────────────
             if self.set_limit:
@@ -1285,7 +1344,7 @@ class OrbitPlots:
             ax_a3.set_ylabel(r'$\alpha_{\delta}$ (mas yr$^{-2}$)',  labelpad=6, fontsize=11)
 
             for ax in [ax1, ax3, ax2, ax4]:
-                ax.xaxis.set_major_formatter(NullFormatter())
+                ax.tick_params(labelbottom=False)   # see RV(): a shared NullFormatter would also blank the bottom panel
                 ax.xaxis.set_minor_locator(AutoMinorLocator())
                 ax.yaxis.set_minor_locator(AutoMinorLocator())
                 ax.tick_params(direction='in', which='both',
@@ -1302,9 +1361,26 @@ class OrbitPlots:
             ax2.set_ylim(-1.2*y1_RA,  1.2*y1_RA)
             ax4.set_ylim(-1.2*y1_Dec, 1.2*y1_Dec)
 
+            # Gaia-only NSS source (Acc7 or Acc9, no Hipparcos): the only proper
+            # motion is the Gaia one, which the free barycentric proper motion
+            # absorbs, so its O-C is zero by construction.  Drop the O-C panel
+            # and let the proper-motion panel take its space; the orbit is
+            # tested by the acceleration (and jerk) panel below.
+            if getattr(self, 'n_pm_epochs', 2) < 2:
+                for top, oc in ((ax1, ax2), (ax3, ax4)):
+                    b_top, b_oc = top.get_position(), oc.get_position()
+                    top.set_position([b_top.x0, b_oc.y0, b_top.width, b_top.y1 - b_oc.y0])
+                    oc.remove()
+
             if self.have_nss_acc:
-                ax_a1.legend(fontsize=8, loc='upper left', framealpha=0.6)
-                ax_a3.legend(fontsize=8, loc='upper left', framealpha=0.6)
+                # 'best' keeps the legend off the NSS segment, which a fixed
+                # upper-left legend covers when the acceleration is near its maximum
+                for ax_a in (ax_a1, ax_a3):
+                    handles, labels = ax_a.get_legend_handles_labels()
+                    if ax_a in envelope_handles:
+                        handles = [envelope_handles[ax_a] if lab == ENVELOPE_LABEL else h
+                                   for h, lab in zip(handles, labels)]
+                    ax_a.legend(handles, labels, fontsize=8, loc='best', framealpha=0.8)
             if self.show_title:
                 ax1.set_title('Right Ascension vs. Epoch')
                 ax3.set_title('Declination vs. Epoch')
@@ -1326,7 +1402,7 @@ class OrbitPlots:
                         cbar.ax.get_yaxis().labelpad = 20
                         figure.delaxes(cbar_ax)
                         try:
-                            self.align_ylabels(figure, axes_list, pad=0.02)
+                            self.align_ylabels(figure, [a for a in axes_list if a in figure.axes], pad=0.02)
                         except Exception:
                             pass
                         with warnings.catch_warnings():
@@ -1343,8 +1419,8 @@ class OrbitPlots:
                     cbar.ax.get_yaxis().labelpad = 20
                     fig.delaxes(cbar_ax)
                     try:
-                        self.align_ylabels(fig, [ax1, ax2, ax_a1], pad=0.02)
-                        self.align_ylabels(fig, [ax3, ax4, ax_a3], pad=0.02)
+                        self.align_ylabels(fig, [a for a in (ax1, ax2, ax_a1) if a in fig.axes], pad=0.02)
+                        self.align_ylabels(fig, [a for a in (ax3, ax4, ax_a3) if a in fig.axes], pad=0.02)
                     except Exception:
                         pass
                     with warnings.catch_warnings():
@@ -1369,6 +1445,7 @@ class OrbitPlots:
             for ax, ylabel in [(ax1, r'$\mu_{\alpha*}$ (mas yr$^{-1}$)'),
                                (ax2, r'$\mu_{\delta}$ (mas yr$^{-1}$)')]:
                 ax.set_xlim(self.start_epoch, self.end_epoch)
+                self._year_ticks(ax)
                 ax.xaxis.set_minor_locator(AutoMinorLocator())
                 ax.yaxis.set_minor_locator(AutoMinorLocator())
                 ax.tick_params(direction='in', which='both',

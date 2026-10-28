@@ -3,6 +3,40 @@
 
 *(added 2026-10-23, before the first release of 1.2.1)*
 
+- Plotting fixes (2026-10-27):
+  - Proper-motion O-C for a Gaia NSS source now compares the DR3 proper motion
+    with the model proper motion averaged over the Gaia window
+    (`OrbitPlots.model_window_mean_pm`), which is what chi^2_G uses, instead of
+    the model value at 2016.0. For an `Acceleration9` source the two differ by
+    jerk (T/2)^2 / 6, e.g. 4.3 mas/yr in Dec for G 139-29, which showed up as
+    a spurious O-C offset. The window mean is drawn as a dotted segment in the
+    proper-motion panels.
+  - Year labels restored on the bottom panel of the RV, separation, position-angle
+    and proper-motion figures: the top panels hid theirs with a NullFormatter,
+    which `sharex` also applied to the O-C panel. They now use
+    `tick_params(labelbottom=False)`.
+  - The NSS acceleration segment, its 1-sigma band and the Acc7/Acc9 marker are
+    drawn in red so they stand out from the viridis posterior draws; the panel
+    legend is placed with `loc='best'` so it does not cover the segment. The
+    1-sigma envelope has one legend entry showing both the shaded band and its
+    dashed edges (previously the dashed edges were unlabelled).
+  - Epoch axes of the full-orbit RV, separation and position-angle figures (and
+    the O-C axes of the latter two) use whole-year ticks, at most ~6 of them,
+    when the span is 4 yr or more (`OrbitPlots._year_ticks`); the default put a
+    label every 2.5 yr ('2012.52015.0...'), which overlapped.
+  - The proper-motion O-C panel is omitted for a source with a single
+    proper-motion epoch, i.e. a Gaia-only NSS source (Acc7 or Acc9, no
+    Hipparcos). Its only proper motion is the Gaia one, which the two free
+    barycentric proper-motion parameters reproduce, so the O-C is zero by
+    construction; the proper-motion panel takes the space and the orbit is
+    tested by the acceleration (and jerk) panel. Sources with Hipparcos data
+    (`hip_and_gaia`, or the HGCA) keep the O-C panel.
+  - The jerk annotation ("j = measured +/- error (model ...)") is removed from
+    the acceleration panel: the red segment's slope already shows the measured
+    jerk. `OrbitPlots.model_accel_jerk` is kept.
+  - For an `Acceleration7` source the constant NSS acceleration line across the
+    window now has a legend entry ("Gaia NSS a (Acc7, constant)").
+
 - Proper-motion diagnostic figure: the model acceleration is now drawn as a
   function of time -- the time derivative of the proper-motion curves in the
   panels above (black = maximum-likelihood orbit, coloured = posterior draws) --
@@ -10,8 +44,7 @@
   is drawn as the segment a + j (t - J2016.0) across the 2 x 517.5 d window with
   its 1-sigma envelope; for `Acceleration7` as a constant over the window. The
   acceleration O-C sub-panel has been removed; the coefficient comparison that
-  enters chi^2_G is still quoted in the jerk annotation and in the best-step
-  chi^2 output.
+  enters chi^2_G is reported in the best-step chi^2 output.
 - Sampler: `ptemcee-for-orbitize>=1.1.0` -- the orbitize! project's maintained
   fork of ptemcee, carrying the same NumPy-2 fix (`np.float` -> `float`) that
   1.2.0/1.2.1 bundled -- replaces the bundled copy, which is removed. The

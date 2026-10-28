@@ -1191,8 +1191,17 @@ class OrbitPlots:
                 ax4.plot(T[indx], orb.mu_Dec[indx] - orb_ml.mu_Dec[indx], color=c, alpha=0.3)
 
             # ── best-fit curves ───────────────────────────────────────────
-            ax1.plot(T[indx], orb_ml.mu_RA[indx],  color='black')
-            ax3.plot(T[indx], orb_ml.mu_Dec[indx], color='black')
+            ax1.plot(T[indx], orb_ml.mu_RA[indx],  color='black', label=r'Model $\mu(t)$')
+            ax3.plot(T[indx], orb_ml.mu_Dec[indx], color='black', label=r'Model $\mu(t)$')
+
+            # Name the proper-motion points after what they are: a Gaia-only NSS
+            # source has just the Gaia window-mean proper motion.
+            if getattr(self, 'have_nss_acc', False) and getattr(self, 'n_pm_epochs', 2) < 2:
+                pm_data_label = 'Gaia NSS (Acc%d)' % self.gaia_npar
+            elif getattr(self, 'have_nss_acc', False):
+                pm_data_label = 'Hipparcos / Gaia NSS (Acc%d)' % self.gaia_npar
+            else:
+                pm_data_label = 'Hipparcos / Gaia'
             ax2.plot(self.epoch_calendar, np.zeros(len(self.epoch_calendar)), 'k--', dashes=(5, 5))
             ax4.plot(self.epoch_calendar, np.zeros(len(self.epoch_calendar)), 'k--', dashes=(5, 5))
 
@@ -1202,13 +1211,13 @@ class OrbitPlots:
                          fmt='o', ecolor='black', capsize=5, markersize=1, zorder=299)
             ax1.scatter(ep_mualp_obs_calendar, self.mualp_obs, s=80,
                         facecolors=self.marker_color, edgecolors='k', zorder=300,
-                        label='Hip / Gaia PM')
+                        label=pm_data_label)
             ax3.errorbar(ep_mudec_obs_calendar, self.mudec_obs,
                          yerr=self.mudec_obs_err, color=self.marker_color,
                          fmt='o', ecolor='black', capsize=5, markersize=1, zorder=299)
             ax3.scatter(ep_mudec_obs_calendar, self.mudec_obs, s=80,
                         facecolors=self.marker_color, edgecolors='k', zorder=300,
-                        label='Hip / Gaia PM')
+                        label=pm_data_label)
 
             # ── PM O-C ────────────────────────────────────────────────────
             dat_OC_RA  = np.array(self.mualp_obs - orb_ml_RA.mu_RA,  dtype=float)
@@ -1225,12 +1234,16 @@ class OrbitPlots:
                 dat_OC_Dec[iG_Dec] = self.mudec_obs[iG_Dec] - mean_Dec
                 ax1.hlines(mean_RA, self.ep_gaia_acc - h_win, self.ep_gaia_acc + h_win,
                            colors='k', linestyles=':', lw=1.8, zorder=298,
-                           label='Model, Gaia-window mean')
+                           label='Model, mean over Gaia window')
                 ax3.hlines(mean_Dec, ep_dec_c - h_win, ep_dec_c + h_win,
                            colors='k', linestyles=':', lw=1.8, zorder=298,
-                           label='Model, Gaia-window mean')
-                ax1.legend(fontsize=8, loc='best', framealpha=0.6)
-                ax3.legend(fontsize=8, loc='best', framealpha=0.6)
+                           label='Model, mean over Gaia window')
+                # model entries first, data last, as in the acceleration panel
+                for ax_pm in (ax1, ax3):
+                    h, l = ax_pm.get_legend_handles_labels()
+                    order = sorted(range(len(l)), key=lambda k: l[k] == pm_data_label)
+                    ax_pm.legend([h[k] for k in order], [l[k] for k in order],
+                                 fontsize=8, loc='best', framealpha=0.8)
             ax2.errorbar(ep_mualp_obs_calendar, dat_OC_RA,
                          yerr=self.mualp_obs_err, color=self.marker_color,
                          fmt='o', ecolor='black', capsize=5, markersize=1, zorder=299)

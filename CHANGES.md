@@ -36,6 +36,10 @@
     jerk. `OrbitPlots.model_accel_jerk` is kept.
   - For an `Acceleration7` source the constant NSS acceleration line across the
     window now has a legend entry ("Gaia NSS a (Acc7, constant)").
+  - Proper-motion panel legend: model entries first ("Model mu(t)", "Model, mean
+    over Gaia window"), then the data, named after the solution ("Gaia NSS
+    (AccN)" for a Gaia-only source, "Hipparcos / Gaia NSS (AccN)" with
+    Hipparcos), instead of a generic "Hip / Gaia PM".
 
 - Proper-motion diagnostic figure: the model acceleration is now drawn as a
   function of time -- the time derivative of the proper-motion curves in the

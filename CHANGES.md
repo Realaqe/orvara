@@ -55,6 +55,13 @@
   HD 4747 B end-to-end test reproduces the published posterior with it.
 - `orvara/tests/config_Gl758.ini` restored to repository-relative paths.
 - `orvara/tests/plots/` (committed test output) removed from the repository.
+- Review round of 2026-10-29 (T. Brandt): `relast_error_scale` removed (rescale
+  the relative-astrometry file instead); the test-only `Model.set_dRA_dDec`
+  hook and `test_finite_differences.py` removed (the end-to-end closure test in
+  `test_accel_forward_model.py` covers the stencils); the committed
+  `J2043_gaia_accel.fits` golden file removed, the generator is tested by
+  building the table and reading it back; the GitHub Actions workflow removed.
+  53 tests (49 fast + 4 end-to-end).
 
 - Verified on 2026-10-05: Python 3.12.14, NumPy 2.5.3, SciPy 1.18.1, Astropy 8.0.1.
   59 unit tests and 4 end-to-end tests pass. Sdist and wheel pass `twine check` and
@@ -224,20 +231,14 @@ Python 3.10-3.13 with NumPy 2.x.
 
 ### Tests
 
-- `orvara/tests/test_finite_differences.py`: feeds an exact cubic to
-  `calc_PMs_no_epoch_astrometry` and checks the recovered proper motion,
-  acceleration and jerk, plus the centroid fix above. `Model.set_dRA_dDec` was
-  added to make that path testable.
-- `orvara/tests/test_gaia_accel.py`: `corr_vec` handling, both build modes, a
-  regression check against the previously generated `J2043_gaia_accel.fits`,
+- `orvara/tests/test_gaia_accel.py`: `corr_vec` handling, both build modes,
   and a round trip through `orvara.orbit.Data`.
 - `orvara/tests/test_config.py`: schema validation, the shipped templates, and
   backwards compatibility with the legacy prep files.
 - `orvara/tests/test_plotting.py`: `plot_orbit` had no tests at all. It now has
   smoke tests that run the real entry point on the tutorial chain, including
   the no-`xlim` case above.
-- `orvara/tests/test_accel_forward_model.py`: asserts that `calc_offsets` is
-  what populates the Gaia offsets (the bug above), and closes the loop on the
+- `orvara/tests/test_accel_forward_model.py`: closes the loop on the
   forward model -- fit a synthetic Gaia-only Acceleration9 source, then
   re-derive the acceleration and jerk from the posterior sky path and confirm
   they reproduce the NSS coefficients the fit was constrained by. On the shipped

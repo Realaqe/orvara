@@ -556,38 +556,6 @@ cdef class Model:
             relRVs[i] = self.rel_RV[i]
         return relRVs
 
-    def set_dRA_dDec(self, dRA_G=None, dDec_G=None, dRA_H1=None, dDec_H1=None):
-        """
-        Set the simulated sky-path offsets directly.
-
-        This exists so the finite-difference formulas in
-        :func:`calc_PMs_no_epoch_astrometry` can be tested against an analytic
-        polynomial without running a whole orbit integration.  Each argument, if
-        given, must have the matching length (``nGaia`` for the Gaia arrays,
-        ``nHip1`` for the Hipparcos ones).
-        """
-        cdef int i
-        if dRA_G is not None:
-            if len(dRA_G) != self.nGaia:
-                raise ValueError('dRA_G must have length nGaia = %d' % self.nGaia)
-            for i in range(self.nGaia):
-                self.dRA_G[i] = dRA_G[i]
-        if dDec_G is not None:
-            if len(dDec_G) != self.nGaia:
-                raise ValueError('dDec_G must have length nGaia = %d' % self.nGaia)
-            for i in range(self.nGaia):
-                self.dDec_G[i] = dDec_G[i]
-        if dRA_H1 is not None:
-            if len(dRA_H1) != self.nHip1:
-                raise ValueError('dRA_H1 must have length nHip1 = %d' % self.nHip1)
-            for i in range(self.nHip1):
-                self.dRA_H1[i] = dRA_H1[i]
-        if dDec_H1 is not None:
-            if len(dDec_H1) != self.nHip1:
-                raise ValueError('dDec_H1 must have length nHip1 = %d' % self.nHip1)
-            for i in range(self.nHip1):
-                self.dDec_H1[i] = dDec_H1[i]
-
     def return_dRA_dDec(self):
         cdef int i, j
         dRAs_G = np.empty(self.nGaia)

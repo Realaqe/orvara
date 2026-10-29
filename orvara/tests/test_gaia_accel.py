@@ -119,26 +119,6 @@ def _build(config_name, tmp_dir, **overrides):
     return settings
 
 
-def test_written_file_reproduces_the_reference_output():
-    """The npar=7 example must still produce what it produced before."""
-    reference = os.path.join(GAIA_ACCEL_DIR, 'J2043_gaia_accel.fits')
-    with tempfile.TemporaryDirectory() as tmp:
-        settings = _build('gaia_accel_prep_J2043.ini', tmp)
-        with fits.open(settings['output_fits']) as new, fits.open(reference) as old:
-            new_row, old_row = new[1].data[0], old[1].data[0]
-            for name in ('hip_id', 'gaia_npar', 'accra_gaia', 'accdec_gaia',
-                         'accra_gaia_error', 'accdec_gaia_error',
-                         'accra_accdec_gaia', 'pmra_gaia', 'pmdec_gaia',
-                         'parallax_gaia', 'pmra_hip_error', 'pmra_hg_error'):
-                assert np.isclose(float(new_row[name]), float(old_row[name]),
-                                  rtol=1e-6), name
-            # Deliberate difference from the reference file: the window is now
-            # centred on the NSS reference epoch rather than the 5-parameter
-            # "uncorrelated position" epoch the old generator computed.
-            assert float(new_row['epoch_ra_gaia']) == 2016.0
-            assert not np.isclose(float(old_row['epoch_ra_gaia']), 2016.0)
-
-
 @pytest.mark.parametrize('config_name,npar', [
     ('gaia_accel_prep_J2043.ini', 7),
     ('gaia_accel_prep_Acc9.ini', 9),

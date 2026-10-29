@@ -60,8 +60,7 @@ To run just the Gaia-acceleration and configuration tests:
 
 .. code-block:: bash
 
-    pytest -sv orvara/tests/test_gaia_accel.py orvara/tests/test_config.py \
-              orvara/tests/test_finite_differences.py
+    pytest -sv orvara/tests/test_gaia_accel.py orvara/tests/test_config.py
 
 If any test fails, something is wrong with the install. If you recently switched
 branches, delete the generated ``orvara/orbit.c`` and the compiled

@@ -291,9 +291,9 @@ class OrbitPlots:
             i = int(matches[0])
             ep_mualp_obs = np.array([t['epoch_ra_hip'][i],  t['epoch_ra_gaia'][i]])
             ep_mudec_obs = np.array([t['epoch_dec_hip'][i], t['epoch_dec_gaia'][i]])
-            mualp_obs     = np.array([t['pmra_hip'][i],       t['pmra_gaia'][i]])
+            mualp_obs = np.array([t['pmra_hip'][i], t['pmra_gaia'][i]])
             mualp_obs_err = np.array([t['pmra_hip_error'][i], t['pmra_gaia_error'][i]])
-            mudec_obs     = np.array([t['pmdec_hip'][i],       t['pmdec_gaia'][i]])
+            mudec_obs = np.array([t['pmdec_hip'][i], t['pmdec_gaia'][i]])
             mudec_obs_err = np.array([t['pmdec_hip_error'][i], t['pmdec_gaia_error'][i]])
             for k in range(len(ep_mualp_obs)):
                 ep_mualp_obs[k] = self.calendar_to_JD(ep_mualp_obs[k])
@@ -328,31 +328,31 @@ class OrbitPlots:
                 self.dt_gaia = 2.76
 
             if self.gaia_npar >= 7 and 'accra_gaia' in col_names:
-                self.nss_accra      = float(t['accra_gaia'][i])
-                self.nss_accra_err  = float(t['accra_gaia_error'][i])
-                self.nss_accdec     = float(t['accdec_gaia'][i])
+                self.nss_accra = float(t['accra_gaia'][i])
+                self.nss_accra_err = float(t['accra_gaia_error'][i])
+                self.nss_accdec = float(t['accdec_gaia'][i])
                 self.nss_accdec_err = float(t['accdec_gaia_error'][i])
-                self.have_nss_acc   = True
+                self.have_nss_acc = True
             else:
-                self.have_nss_acc   = False
+                self.have_nss_acc = False
                 self.nss_accra = self.nss_accra_err = None
                 self.nss_accdec = self.nss_accdec_err = None
 
             if self.gaia_npar == 9 and 'jerkra_gaia' in col_names:
-                self.nss_jerkra      = float(t['jerkra_gaia'][i])
-                self.nss_jerkra_err  = float(t['jerkra_gaia_error'][i])
-                self.nss_jerkdec     = float(t['jerkdec_gaia'][i])
+                self.nss_jerkra = float(t['jerkra_gaia'][i])
+                self.nss_jerkra_err = float(t['jerkra_gaia_error'][i])
+                self.nss_jerkdec = float(t['jerkdec_gaia'][i])
                 self.nss_jerkdec_err = float(t['jerkdec_gaia_error'][i])
-                self.have_nss_jerk   = True
+                self.have_nss_jerk = True
             else:
-                self.have_nss_jerk   = False
+                self.have_nss_jerk = False
                 self.nss_jerkra = self.nss_jerkra_err = None
                 self.nss_jerkdec = self.nss_jerkdec_err = None
 
         except Exception as e:
             self.have_pmdat    = False
             self.n_pm_epochs   = 0
-            self.have_nss_acc  = False
+            self.have_nss_acc = False
             self.have_nss_jerk = False
             return [None, None, None, None, None, None]
         return ep_mualp_obs, ep_mudec_obs, mualp_obs, mudec_obs, mualp_obs_err, mudec_obs_err

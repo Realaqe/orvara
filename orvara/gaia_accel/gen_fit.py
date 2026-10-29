@@ -228,9 +228,10 @@ def build_row(settings):
             if name in hip:
                 row[name] = hip[name]
     else:
-        # gaia_only: no Hipparcos measurement exists.  Fill the Hip and Hip-Gaia
-        # rows with the Gaia proper motion and give them enormous errors, so
-        # they add nothing to chi^2 and only the NSS solution drives the fit.
+        # gaia_only: no Hipparcos measurement exists.  Give the Hip and Hip-Gaia
+        # proper motions enormous errors so they add nothing to chi^2 and only
+        # the NSS solution drives the fit; their values are then irrelevant, and
+        # the Gaia proper motion is used so that the row stays self-consistent.
         row.update({
             'pmra_hip': pmra, 'pmdec_hip': pmdec,
             'pmra_hip_error': BIG_PM_ERROR, 'pmdec_hip_error': BIG_PM_ERROR,
@@ -239,9 +240,10 @@ def build_row(settings):
             'pmra_hg_error': BIG_PM_ERROR, 'pmdec_hg_error': BIG_PM_ERROR,
             'pmra_pmdec_hg': 0.0,
             'epoch_ra_hip': HIP_REF_EPOCH, 'epoch_dec_hip': HIP_REF_EPOCH,
-            'crosscal_pmra_hip': pmra, 'crosscal_pmdec_hip': pmdec,
-            'crosscal_pmra_hg': pmra, 'crosscal_pmdec_hg': pmdec,
-            'nonlinear_dpmra': pmra * 1.0e-4, 'nonlinear_dpmdec': pmdec * 1.0e-4,
+            # HGCA bookkeeping columns that orvara does not read
+            'crosscal_pmra_hip': 0.0, 'crosscal_pmdec_hip': 0.0,
+            'crosscal_pmra_hg': 0.0, 'crosscal_pmdec_hg': 0.0,
+            'nonlinear_dpmra': 0.0, 'nonlinear_dpmdec': 0.0,
             'chisq': 0.0,
         })
     return row

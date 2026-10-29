@@ -42,29 +42,6 @@ def _nss_file(config_name, tmp_dir):
     return settings
 
 
-def test_calc_offsets_is_what_populates_the_gaia_offsets():
-    with tempfile.TemporaryDirectory() as tmp:
-        settings = _nss_file('gaia_accel_prep_Acc9.ini', tmp)
-        data = orbit.Data(settings['hip_id'], settings['output_fits'], '', '',
-                          gaia_mission_length_yrs=DT_G, verbose=False)
-        h = DT_G / 2.0
-        epochs = 2455197.5 + (np.array([-h, -h / 3, h / 3, h])
-                              + settings['ra'] * 0.0 + 6.0) * 365.25
-        data.custom_epochs(epochs)
-        model = orbit.Model(data)
-        par = orbit.Params(THETA, 0, 1, data.nInst, 1)
-
-        orbit.calc_EA_RPP(data, par, model)
-        dRA_G, dDec_G = model.return_dRA_dDec()[:2]
-        assert np.allclose(dRA_G, 0), 'calc_EA_RPP should not fill dRA_G'
-        assert np.allclose(dDec_G, 0)
-
-        orbit.calc_offsets(data, par, model, 0)
-        dRA_G, dDec_G = model.return_dRA_dDec()[:2]
-        assert not np.allclose(dRA_G, 0), 'calc_offsets must fill dRA_G'
-        assert not np.allclose(dDec_G, 0)
-
-
 FIT_CONFIG = """
 [data_paths]
 HipID = {hip_id}

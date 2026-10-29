@@ -118,12 +118,10 @@ problem and several smaller ones. All are fixed here; 59 tests pass.
   window about `epoch_dec_gaia`.
 - The `gaia_npar not in (5, 7, 9)` check was inside a `try/except` that
   swallowed it; moved out.
-- Packaging: the sdist now ships `orbit.pyx` (and not the generated `orbit.c`),
-  so a wheel can be built from it; licence metadata uses the SPDX form. Verified
-  by building sdist + wheel and installing from the sdist on Python 3.10, 3.12
-  and 3.13.
-- A `conftest.py` explains, instead of a bare ImportError, that the test suite
-  runs against an editable install.
+- Packaging: `pyproject.toml` declares Cython as a build requirement and the
+  sdist includes `orbit.pyx`, so a wheel can be built from the sdist alone (the
+  generated `orbit.c` is not committed, as before). Verified by building sdist +
+  wheel and installing from the sdist on Python 3.10, 3.12 and 3.13.
 
 
 This release merges the two Gaia-acceleration branches (`orvara_gaia_accel_Acc9`

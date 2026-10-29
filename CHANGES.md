@@ -56,21 +56,6 @@
 - `orvara/tests/config_Gl758.ini` restored to repository-relative paths.
 - `orvara/tests/plots/` (committed test output) removed from the repository.
 
-- **`[data_paths] relast_error_scale`**: one factor that multiplies every
-  separation and position-angle uncertainty in `AstrometryFile` when it is
-  read (default 1). It replaces the practice of rewriting the relative-astrometry
-  file by hand between passes; the value is printed at the start of the fit and
-  kept, with the rest of the configuration, in the chain-file header. The
-  recommended use is iterative: set it to `sqrt(chi2_rel / 2 N_rel)` of the
-  previous fit's maximum-likelihood step, cumulatively, until the ratio is
-  about unity (see USAGE.md, Section 7).
-- `fit_orbit` now logs the two error conventions that enter the likelihood at
-  start-up: the NSS acceleration/jerk inflation recorded in the one-star HGCA
-  file (`ERRINFL`, written by `orvara-gaia-accel`) and the relative-astrometry
-  scale above.
-- `Data.relsep_err` and `Data.PA_err` are readable from Python (they were
-  private Cython attributes), so the scaling is testable; four tests added
-  (`test_relast_error_scale.py`). 63 tests pass.
 - Verified on 2026-10-05: Python 3.12.14, NumPy 2.5.3, SciPy 1.18.1, Astropy 8.0.1.
   59 unit tests and 4 end-to-end tests pass. Sdist and wheel pass `twine check` and
   install into a fresh Python 3.13 environment. The 05231-3142 fit of An et al.

@@ -120,8 +120,8 @@ cdef class Data:
     cdef int [:] RVinst
     cdef double [:] relsep
     cdef double [:] PA
-    cdef public double [:] relsep_err
-    cdef public double [:] PA_err
+    cdef double [:] relsep_err
+    cdef double [:] PA_err
     cdef double [:] relsep_pa_corr
     cdef int [:] ast_planetID
     cdef int [:] rel_RV_planetID
@@ -140,7 +140,6 @@ cdef class Data:
     cdef public double [:, :] Cinv_G_jerk_terms
     cdef double [:, :] Cinv_G_B
     cdef public double refep, gaia_mission_length_yrs
-    cdef public double relast_error_scale
     cdef public double epRA_H, epDec_H, epRA_G, epDec_G, dt_H, dt_G
     cdef public int use_abs_ast
 
@@ -148,14 +147,7 @@ cdef class Data:
                  use_epoch_astrometry=False,
                  epochs_Hip1=None, epochs_Hip2=None, epochs_Gaia=None,
                  refep=2455197.5000, companion_gaia=None, verbose=True,
-                 gaia_mission_length_yrs=2.76, relast_error_scale=1.0):
-        # relast_error_scale multiplies every separation and position-angle
-        # uncertainty in relAstfile (the [data_paths] relast_error_scale key).
-        # Set it to sqrt(chi2_rel / 2 N_rel) of a previous fit and re-fit to
-        # bring the relative-astrometry residuals to unit variance.
-        if relast_error_scale <= 0:
-            raise ValueError('relast_error_scale must be positive, got %r' % (relast_error_scale,))
-        self.relast_error_scale = float(relast_error_scale)
+                 gaia_mission_length_yrs=2.76):
         try:
             rel_rvdat = np.genfromtxt(relRVFile)
             if len(rel_rvdat.shape) == 1:
@@ -222,11 +214,9 @@ cdef class Data:
             else:
                 relep = reldat[:, 0]
             self.relsep = reldat[:, 1]
-            self.relsep_err = reldat[:, 2]*self.relast_error_scale
+            self.relsep_err = reldat[:, 2]
             self.PA = reldat[:, 3]*np.pi/180
-            self.PA_err = reldat[:, 4]*np.pi/180*self.relast_error_scale
-            if verbose and self.relast_error_scale != 1:
-                print("Relative-astrometry uncertainties scaled by %.4f" % self.relast_error_scale)
+            self.PA_err = reldat[:, 4]*np.pi/180
             self.nAst = reldat.shape[0]
             # Relative separation/PA correlation \in (-1, 1)
             try:

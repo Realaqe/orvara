@@ -172,25 +172,6 @@ def identify_hgca_version(HGCAFile):
         f"{[e for e, _, _ in _HGCA_EPOCH_SIGNATURES]}.")
 
 
-def _log_error_conventions(HGCAFile, AstrometryFile, relast_error_scale):
-    """Print the two error conventions that enter the likelihood, so that a
-    fit's log records them: the NSS acceleration/jerk error inflation written
-    into a one-star HGCA file by orvara-gaia-accel (header ERRINFL), and the
-    scaling applied to the relative-astrometry uncertainties."""
-    inflation = None
-    try:
-        with fits.open(HGCAFile) as hdul:
-            inflation = hdul[0].header.get('ERRINFL')
-    except Exception:
-        pass
-    if inflation is not None:
-        print('Gaia NSS acceleration/jerk uncertainties inflated by %s (from %s)'
-              % (inflation, os.path.basename(HGCAFile)))
-    if AstrometryFile:
-        print('Relative-astrometry uncertainties in %s scaled by %.4f'
-              % (os.path.basename(AstrometryFile), relast_error_scale))
-
-
 def initialize_data(config, companion_gaia):
     # load in items from the ConfigParser object
     HipID = config.getint('data_paths', 'HipID', fallback=0)
@@ -207,13 +188,8 @@ def initialize_data(config, companion_gaia):
     Hip2DataDir = config.get('data_paths', 'Hip2DataDir', fallback='')
     Hip1DataDir = config.get('data_paths', 'Hip1DataDir', fallback='')
     use_epoch_astrometry = config.getboolean('mcmc_settings', 'use_epoch_astrometry', fallback=False)
-    relast_error_scale = config.getfloat('data_paths', 'relast_error_scale', fallback=1.0)
-    if relast_error_scale <= 0:
-        raise ValueError('[data_paths] relast_error_scale must be positive.')
-    _log_error_conventions(HGCAFile, AstrometryFile, relast_error_scale)
     data = orbit.Data(HipID, HGCAFile, RVFile, AstrometryFile, relRVFile=relRVFile, companion_gaia=companion_gaia,
-                      gaia_mission_length_yrs=gaia_mission_length_yrs,
-                      relast_error_scale=relast_error_scale)
+                      gaia_mission_length_yrs=gaia_mission_length_yrs)
     if use_epoch_astrometry and data.use_abs_ast == 1:
         gaia_fit_degree = {5: 1, 7: 2, 9: 3}[data.gaia_npar]
         Gaia_fitter = Astrometry(HGCAVersion, '%06d' % (HipID), GaiaDataDir,
@@ -238,8 +214,7 @@ def initialize_data(config, companion_gaia):
                           epochs_Hip1=Hip1_fitter.data.julian_day_epoch(),
                           epochs_Hip2=Hip2_fitter.data.julian_day_epoch(),
                           epochs_Gaia=Gaia_fitter.data.julian_day_epoch(),
-                          companion_gaia=companion_gaia, verbose=False,
-                          relast_error_scale=relast_error_scale)
+                          companion_gaia=companion_gaia, verbose=False)
     elif data.use_abs_ast == 1:
         hip1_fast_fitter, hip2_fast_fitter, gaia_fast_fitter = None, None, None
     else:

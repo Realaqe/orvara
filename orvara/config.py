@@ -91,11 +91,6 @@ FIT_SCHEMA = {
         Key('RVFile', 'path'),
         Key('relRVFile', 'path'),
         Key('AstrometryFile', 'path'),
-        Key('relast_error_scale', 'float',
-            doc='Multiplies every separation and position-angle uncertainty in '
-                'AstrometryFile (default 1). Set to sqrt(chi2_rel / 2 N_rel) of a '
-                'previous fit, cumulatively, to bring the relative-astrometry '
-                'residuals to unit variance.'),
         Key('GaiaDataDir', 'path', doc='Gaia epoch astrometry (GOST) directory.'),
         Key('Hip1DataDir', 'path'),
         Key('Hip2DataDir', 'path'),

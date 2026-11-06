@@ -62,6 +62,11 @@
   `J2043_gaia_accel.fits` golden file removed, the generator is tested by
   building the table and reading it back; the GitHub Actions workflow removed.
   53 tests (49 fast + 4 end-to-end).
+- Review round 2 (2026-11-06): the generator's optional `[gaia_accel_rv]` /
+  `[gaia_accel_relast]` inputs removed -- they appended RV and relative-astrometry
+  tables to the FITS file that `fit_orbit` never read; the fit reads `RVFile` and
+  `AstrometryFile` as before. Half-baselines `h_H`, `h_G` defined once in
+  `Data.__init__`; alignment whitespace around `=` removed.
 
 - Verified on 2026-10-05: Python 3.12.14, NumPy 2.5.3, SciPy 1.18.1, Astropy 8.0.1.
   59 unit tests and 4 end-to-end tests pass. Sdist and wheel pass `twine check` and

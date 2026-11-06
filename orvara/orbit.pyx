@@ -332,35 +332,34 @@ cdef class Data:
             dmurG_epc = (self.epRA_G - 2010.0)*365.25 + ep_2010
             dmudG_epc = (self.epDec_G - 2010.0)*365.25 + ep_2010
 
+            # Half-baselines in days: the sample points below sit at +/- h
+            # around each central epoch.
+            h_H = self.dt_H * 365.25 / 2.0
+            h_G = self.dt_G * 365.25 / 2.0
+
             # Hip sample points (3 per coordinate = 6 total): unchanged
-            hip_steps = [dmurH_epc - self.dt_H*0.5*365.25, dmurH_epc,
-                         dmurH_epc + self.dt_H*0.5*365.25,
-                         dmudH_epc - self.dt_H*0.5*365.25, dmudH_epc,
-                         dmudH_epc + self.dt_H*0.5*365.25,
-                         dmurH_epc - self.dt_H*0.5*365.25, dmurH_epc,
-                         dmurH_epc + self.dt_H*0.5*365.25,
-                         dmudH_epc - self.dt_H*0.5*365.25, dmudH_epc,
-                         dmudH_epc + self.dt_H*0.5*365.25]
+            hip_steps = [dmurH_epc - h_H, dmurH_epc, dmurH_epc + h_H,
+                         dmudH_epc - h_H, dmudH_epc, dmudH_epc + h_H,
+                         dmurH_epc - h_H, dmurH_epc, dmurH_epc + h_H,
+                         dmudH_epc - h_H, dmudH_epc, dmudH_epc + h_H]
 
             if self.gaia_npar == 9:
                 # For a 9-parameter (PM + acc + jerk) fit we need 4 sample points per
                 # coordinate to extract PM, acceleration, AND jerk via cubic finite
-                # differences.  Points are placed at -T/2, -T/6, +T/6, +T/2 around the
-                # Gaia central epoch (T = gaia_mission_length_yrs), giving nGaia = 8.
+                # differences.  Points are placed at -h, -h/3, +h/3, +h around the
+                # Gaia central epoch (h = T/2, T = gaia_mission_length_yrs), giving
+                # nGaia = 8.
                 self.nGaia = 8
-                h = self.dt_G * 365.25 / 2.0   # half-baseline in days
-                gaia_ra_steps  = [dmurG_epc - h, dmurG_epc - h/3.0,
-                                  dmurG_epc + h/3.0, dmurG_epc + h]
-                gaia_dec_steps = [dmudG_epc - h, dmudG_epc - h/3.0,
-                                  dmudG_epc + h/3.0, dmudG_epc + h]
+                gaia_ra_steps = [dmurG_epc - h_G, dmurG_epc - h_G/3.0,
+                                 dmurG_epc + h_G/3.0, dmurG_epc + h_G]
+                gaia_dec_steps = [dmudG_epc - h_G, dmudG_epc - h_G/3.0,
+                                  dmudG_epc + h_G/3.0, dmudG_epc + h_G]
             else:
                 # For 5- or 7-parameter fits: 3 sample points per coordinate = 6 total.
-                # Points at -T/2, 0, +T/2 around the Gaia central epoch.
+                # Points at -h, 0, +h around the Gaia central epoch.
                 self.nGaia = 6
-                gaia_ra_steps  = [dmurG_epc - self.dt_G*0.5*365.25, dmurG_epc,
-                                  dmurG_epc + self.dt_G*0.5*365.25]
-                gaia_dec_steps = [dmudG_epc - self.dt_G*0.5*365.25, dmudG_epc,
-                                  dmudG_epc + self.dt_G*0.5*365.25]
+                gaia_ra_steps = [dmurG_epc - h_G, dmurG_epc, dmurG_epc + h_G]
+                gaia_dec_steps = [dmudG_epc - h_G, dmudG_epc, dmudG_epc + h_G]
 
             absasteps = np.asarray(hip_steps + gaia_ra_steps + gaia_dec_steps)
         else:
@@ -1179,10 +1178,10 @@ def calc_PMs_no_epoch_astrometry(Data data, Model model):
     cdef double g0, g1, g2, g3
 
     # ── Hipparcos: unchanged (3-point Simpson centroid and finite difference) ──
-    RA_H  = (4*model.dRA_H1[1]  + model.dRA_H1[0]  + model.dRA_H1[2]) / 6
+    RA_H = (4*model.dRA_H1[1] + model.dRA_H1[0] + model.dRA_H1[2]) / 6
     Dec_H = (4*model.dDec_H1[4] + model.dDec_H1[3] + model.dDec_H1[5]) / 6
 
-    model.pmra_H  = (model.dRA_H1[2]  - model.dRA_H1[0])  / data.dt_H
+    model.pmra_H = (model.dRA_H1[2] - model.dRA_H1[0]) / data.dt_H
     model.pmdec_H = (model.dDec_H1[5] - model.dDec_H1[3]) / data.dt_H
 
     if data.gaia_npar == 9:
@@ -1216,8 +1215,8 @@ def calc_PMs_no_epoch_astrometry(Data data, Model model):
         h = data.dt_G / 2.0     # half-baseline in years
 
         # RA: indices 0,1,2,3
-        f0 = model.dRA_G[0];  f1 = model.dRA_G[1]
-        f2 = model.dRA_G[2];  f3 = model.dRA_G[3]
+        f0 = model.dRA_G[0]; f1 = model.dRA_G[1]
+        f2 = model.dRA_G[2]; f3 = model.dRA_G[3]
 
         # Mean position over the mission.  pmra_HG below is a positional
         # difference divided by a ~25 yr baseline, so RA_G has to be the same
@@ -1234,24 +1233,24 @@ def calc_PMs_no_epoch_astrometry(Data data, Model model):
         # that its derivative averages to zero).  The mean of f' over [-h, h]
         # is (f(h) - f(-h)) / 2h exactly, for any f -- not the derivative at
         # t = 0, which would differ by j h^2 / 6.
-        model.pmra_G   = (f3 - f0) / (2.0 * h)
+        model.pmra_G = (f3 - f0) / (2.0 * h)
         # Acceleration at t = 0 and the (constant) jerk: 4-point stencils that
         # are exact for a cubic.
-        model.accra_G  = (f0 - f1 - f2 + f3) * 9.0 / (8.0 * h * h)
+        model.accra_G = (f0 - f1 - f2 + f3) * 9.0 / (8.0 * h * h)
         model.jerkra_G = (-f0 + 3.0*f1 - 3.0*f2 + f3) * 27.0 / (8.0 * h * h * h)
 
         # Dec: indices 4,5,6,7
-        g0 = model.dDec_G[4];  g1 = model.dDec_G[5]
-        g2 = model.dDec_G[6];  g3 = model.dDec_G[7]
+        g0 = model.dDec_G[4]; g1 = model.dDec_G[5]
+        g2 = model.dDec_G[6]; g3 = model.dDec_G[7]
 
         Dec_G = (g0 + 3.0*g1 + 3.0*g2 + g3) / 8.0
 
-        model.pmdec_G   = (g3 - g0) / (2.0 * h)
-        model.accdec_G  = (g0 - g1 - g2 + g3) * 9.0 / (8.0 * h * h)
+        model.pmdec_G = (g3 - g0) / (2.0 * h)
+        model.accdec_G = (g0 - g1 - g2 + g3) * 9.0 / (8.0 * h * h)
         model.jerkdec_G = (-g0 + 3.0*g1 - 3.0*g2 + g3) * 27.0 / (8.0 * h * h * h)
 
         # Companion PM (if used): same mean-velocity definition
-        model.pmra_G_B  = (model.dRA_G_B[3]  - model.dRA_G_B[0])  / (2.0 * h)
+        model.pmra_G_B = (model.dRA_G_B[3] - model.dRA_G_B[0]) / (2.0 * h)
         model.pmdec_G_B = (model.dDec_G_B[7] - model.dDec_G_B[4]) / (2.0 * h)
 
     else:
@@ -1268,25 +1267,25 @@ def calc_PMs_no_epoch_astrometry(Data data, Model model):
 
         h = data.dt_G / 2.0   # half-baseline in years
 
-        RA_G  = (4*model.dRA_G[1]  + model.dRA_G[0]  + model.dRA_G[2])  / 6.0
+        RA_G = (4*model.dRA_G[1] + model.dRA_G[0] + model.dRA_G[2]) / 6.0
         Dec_G = (4*model.dDec_G[4] + model.dDec_G[3] + model.dDec_G[5]) / 6.0
 
-        model.pmra_G  = (model.dRA_G[2]  - model.dRA_G[0])  / data.dt_G
+        model.pmra_G = (model.dRA_G[2] - model.dRA_G[0]) / data.dt_G
         model.pmdec_G = (model.dDec_G[5] - model.dDec_G[3]) / data.dt_G
 
         # Acceleration (quadratic finite difference)
-        model.accra_G  = (model.dRA_G[0]  + model.dRA_G[2]  - 2*model.dRA_G[1])  / (h * h)
+        model.accra_G = (model.dRA_G[0] + model.dRA_G[2] - 2*model.dRA_G[1]) / (h * h)
         model.accdec_G = (model.dDec_G[3] + model.dDec_G[5] - 2*model.dDec_G[4]) / (h * h)
 
         # Jerk: not recoverable from 3 points; stays zero (set in Model.__init__)
         # data.Cinv_G_jerk_terms is already zeros for gaia_npar < 9, so
         # the zero model jerk incurs no penalty in calcL.
 
-        model.pmra_G_B  = (model.dRA_G_B[2]  - model.dRA_G_B[0])  / data.dt_G
+        model.pmra_G_B = (model.dRA_G_B[2] - model.dRA_G_B[0]) / data.dt_G
         model.pmdec_G_B = (model.dDec_G_B[5] - model.dDec_G_B[3]) / data.dt_G
 
     # ── HG long-baseline PM from centroid positions ───────────────────────────
-    model.pmra_HG  = (RA_G  - RA_H)  / (data.epRA_G  - data.epRA_H)
+    model.pmra_HG = (RA_G - RA_H) / (data.epRA_G - data.epRA_H)
     model.pmdec_HG = (Dec_G - Dec_H) / (data.epDec_G - data.epDec_H)
 
     return

@@ -282,62 +282,13 @@ def _hgca_hdu(row, npar):
     return hdu
 
 
-def _read_table(path, required, kind):
-    """Read a whitespace- or comma-separated table and check its columns."""
-    from astropy.table import Table
-    fmt = 'ascii.csv' if path.lower().endswith(('.csv', '.tsv')) else 'ascii'
-    table = Table.read(path, format=fmt)
-    missing = [name for name in required if name not in table.colnames]
-    if missing:
-        raise ConfigError(f'{kind} file {path!r} is missing column(s) {missing}. '
-                          f'Expected columns: {list(required)}.')
-    return table
-
-
-def _rv_hdu(table):
-    epoch = np.asarray(table['epoch'], dtype=float)
-    instrument = (np.asarray(table['instrument'], dtype=np.int32)
-                  if 'instrument' in table.colnames
-                  else np.zeros(len(epoch), dtype=np.int32))
-    hdu = fits.BinTableHDU.from_columns([
-        fits.Column(name='epoch', format='D', array=epoch, unit='JD'),
-        fits.Column(name='rv', format='D',
-                    array=np.asarray(table['rv'], dtype=float), unit='m/s'),
-        fits.Column(name='rv_err', format='D',
-                    array=np.asarray(table['rv_err'], dtype=float), unit='m/s'),
-        fits.Column(name='instrument', format='J', array=instrument),
-    ])
-    hdu.name = 'RV'
-    return hdu
-
-
-def _relast_hdu(table):
-    hdu = fits.BinTableHDU.from_columns([
-        fits.Column(name='epoch', format='D',
-                    array=np.asarray(table['epoch'], dtype=float), unit='JD'),
-        fits.Column(name='sep', format='D',
-                    array=np.asarray(table['sep'], dtype=float), unit='mas'),
-        fits.Column(name='sep_err', format='D',
-                    array=np.asarray(table['sep_err'], dtype=float), unit='mas'),
-        fits.Column(name='pa', format='D',
-                    array=np.asarray(table['pa'], dtype=float), unit='deg'),
-        fits.Column(name='pa_err', format='D',
-                    array=np.asarray(table['pa_err'], dtype=float), unit='deg'),
-    ])
-    hdu.name = 'RELAST'
-    return hdu
-
-
-def write_nss_fits(settings, overwrite=True, write_data_files=True):
+def write_nss_fits(settings, overwrite=True):
     """
     Write the one-star HGCA-format FITS file described by ``settings``.
 
     :param settings: dict from :func:`orvara.config.nss_settings`.
     :param overwrite: replace an existing output file.
-    :param write_data_files: also convert any ``rv_file`` / ``relast_file`` CSVs
-        into the whitespace-delimited text files ``fit_orbit`` reads, written
-        next to the output FITS.
-    :returns: dict with ``fits`` and, when written, ``rv`` and ``relast`` paths.
+    :returns: dict with the path of the written file under ``fits``.
     """
     npar = settings['npar']
     row = build_row(settings)
@@ -359,32 +310,6 @@ def write_nss_fits(settings, overwrite=True, write_data_files=True):
     outdir = os.path.dirname(os.path.abspath(outpath))
     os.makedirs(outdir, exist_ok=True)
 
-    if settings.get('rv_file'):
-        table = _read_table(settings['rv_file'], ('epoch', 'rv', 'rv_err'), 'RV')
-        hdulist.append(_rv_hdu(table))
-        if write_data_files:
-            path = os.path.join(outdir, f"{os.path.splitext(os.path.basename(outpath))[0]}_RV.dat")
-            columns = ['epoch', 'rv', 'rv_err']
-            if 'instrument' in table.colnames:
-                columns.append('instrument')
-            np.savetxt(path, np.column_stack([np.asarray(table[c], dtype=float)
-                                              for c in columns]),
-                       fmt='%.8f', header=' '.join(columns))
-            written['rv'] = path
-
-    if settings.get('relast_file'):
-        table = _read_table(settings['relast_file'],
-                            ('epoch', 'sep', 'sep_err', 'pa', 'pa_err'),
-                            'relative astrometry')
-        hdulist.append(_relast_hdu(table))
-        if write_data_files:
-            path = os.path.join(outdir, f"{os.path.splitext(os.path.basename(outpath))[0]}_relAST.txt")
-            columns = ['epoch', 'sep', 'sep_err', 'pa', 'pa_err']
-            np.savetxt(path, np.column_stack([np.asarray(table[c], dtype=float)
-                                              for c in columns]),
-                       fmt='%.8f', header=' '.join(columns))
-            written['relast'] = path
-
     hdulist.writeto(outpath, overwrite=overwrite)
     written['fits'] = outpath
 
@@ -401,20 +326,17 @@ def write_nss_fits(settings, overwrite=True, write_data_files=True):
         print(f'  jerk              : jerkra = {row["jerkra_gaia"]:.6f} +/- '
               f'{row["jerkra_gaia_error"]:.6f}, jerkdec = {row["jerkdec_gaia"]:.6f} '
               f'+/- {row["jerkdec_gaia_error"]:.6f}  [mas/yr^3]')
-    for kind in ('rv', 'relast'):
-        if kind in written:
-            print(f'  {kind:<18}: {written[kind]}')
     return written
 
 
-def build_from_config(config_path, overwrite=True, write_data_files=True):
+def build_from_config(config_path, overwrite=True):
     """
     Read ``config_path``, validate its Gaia NSS block and write the FITS file.
 
     Accepts the unified config as well as the legacy
     ``gaia_accel_prep_AccN.ini`` layout.
 
-    :returns: dict of written paths (see :func:`write_nss_fits`).
+    :returns: dict with the path of the written FITS file (see :func:`write_nss_fits`).
     """
     config = load_config(config_path, require_nss=True)
     settings = nss_settings(config, path=config_path)
@@ -427,14 +349,12 @@ def build_from_config(config_path, overwrite=True, write_data_files=True):
     # *input* that is missing from the cwd but present next to the config file
     # is picked up from there.
     base = os.path.dirname(os.path.abspath(config_path))
-    for key in ('hgca_template', 'rv_file', 'relast_file'):
-        value = settings.get(key)
-        if value and not os.path.isabs(value) and not os.path.exists(value):
-            candidate = os.path.join(base, value)
-            if os.path.exists(candidate):
-                settings[key] = candidate
-    return write_nss_fits(settings, overwrite=overwrite,
-                          write_data_files=write_data_files)
+    value = settings.get('hgca_template')
+    if value and not os.path.isabs(value) and not os.path.exists(value):
+        candidate = os.path.join(base, value)
+        if os.path.exists(candidate):
+            settings['hgca_template'] = candidate
+    return write_nss_fits(settings, overwrite=overwrite)
 
 
 def main(argv=None):
@@ -450,17 +370,12 @@ def main(argv=None):
                         help=argparse.SUPPRESS)          # accepted for compatibility
     parser.add_argument('--no-overwrite', action='store_true',
                         help='Fail instead of replacing an existing output file.')
-    parser.add_argument('--no-data-files', action='store_true',
-                        help='Do not convert the RV / relative-astrometry CSVs into '
-                             'the text files fit_orbit reads.')
     args = parser.parse_args(argv)
     config_file = args.config_file or args.config_flag
     if config_file is None:
         parser.error('a configuration file is required')
 
-    build_from_config(config_file,
-                      overwrite=not args.no_overwrite,
-                      write_data_files=not args.no_data_files)
+    build_from_config(config_file, overwrite=not args.no_overwrite)
     return 0
 
 

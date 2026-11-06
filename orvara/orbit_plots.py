@@ -289,7 +289,7 @@ class OrbitPlots:
             if len(matches) == 0:
                 raise KeyError(f'HIP {self.Hip} is not in {self.HGCAFile}')
             i = int(matches[0])
-            ep_mualp_obs = np.array([t['epoch_ra_hip'][i],  t['epoch_ra_gaia'][i]])
+            ep_mualp_obs = np.array([t['epoch_ra_hip'][i], t['epoch_ra_gaia'][i]])
             ep_mudec_obs = np.array([t['epoch_dec_hip'][i], t['epoch_dec_gaia'][i]])
             mualp_obs = np.array([t['pmra_hip'][i], t['pmra_gaia'][i]])
             mualp_obs_err = np.array([t['pmra_hip_error'][i], t['pmra_gaia_error'][i]])
@@ -350,8 +350,8 @@ class OrbitPlots:
                 self.nss_jerkdec = self.nss_jerkdec_err = None
 
         except Exception as e:
-            self.have_pmdat    = False
-            self.n_pm_epochs   = 0
+            self.have_pmdat = False
+            self.n_pm_epochs = 0
             self.have_nss_acc = False
             self.have_nss_jerk = False
             return [None, None, None, None, None, None]
@@ -1126,37 +1126,37 @@ class OrbitPlots:
         if self.have_pmdat:
             if self.pm_separate:
                 fig = plt.figure(figsize=(4.7, 8.0))
-                ax1   = fig.add_axes((0.15, 0.55, 0.80, 0.38))
-                ax2   = fig.add_axes((0.15, 0.39, 0.80, 0.14))
-                ax_a1   = fig.add_axes((0.15, 0.08, 0.80, 0.27))
+                ax1 = fig.add_axes((0.15, 0.55, 0.80, 0.38))
+                ax2 = fig.add_axes((0.15, 0.39, 0.80, 0.14))
+                ax_a1 = fig.add_axes((0.15, 0.08, 0.80, 0.27))
                 fig1 = plt.figure(figsize=(4.7, 8.0))
-                ax3   = fig1.add_axes((0.15, 0.55, 0.80, 0.38))
-                ax4   = fig1.add_axes((0.15, 0.39, 0.80, 0.14))
-                ax_a3   = fig1.add_axes((0.15, 0.08, 0.80, 0.27))
+                ax3 = fig1.add_axes((0.15, 0.55, 0.80, 0.38))
+                ax4 = fig1.add_axes((0.15, 0.39, 0.80, 0.14))
+                ax_a3 = fig1.add_axes((0.15, 0.08, 0.80, 0.27))
             else:
                 fig = plt.figure(figsize=(13, 8.0))
-                ax1     = fig.add_axes((0.08, 0.55, 0.37, 0.38))
-                ax2     = fig.add_axes((0.08, 0.39, 0.37, 0.14))
-                ax_a1   = fig.add_axes((0.08, 0.08, 0.37, 0.27))
-                ax3     = fig.add_axes((0.55, 0.55, 0.37, 0.38))
-                ax4     = fig.add_axes((0.55, 0.39, 0.37, 0.14))
-                ax_a3   = fig.add_axes((0.55, 0.08, 0.37, 0.27))
+                ax1 = fig.add_axes((0.08, 0.55, 0.37, 0.38))
+                ax2 = fig.add_axes((0.08, 0.39, 0.37, 0.14))
+                ax_a1 = fig.add_axes((0.08, 0.08, 0.37, 0.27))
+                ax3 = fig.add_axes((0.55, 0.55, 0.37, 0.38))
+                ax4 = fig.add_axes((0.55, 0.39, 0.37, 0.14))
+                ax_a3 = fig.add_axes((0.55, 0.08, 0.37, 0.27))
 
             # ── epoch arrays for observed data points ─────────────────────
             ep_mualp_obs_calendar = []
-            ep_mudec_obs_calendar  = []
-            t_RA  = np.asarray(self.ep_mualp_obs).flatten()
+            ep_mudec_obs_calendar = []
+            t_RA = np.asarray(self.ep_mualp_obs).flatten()
             t_Dec = np.asarray(self.ep_mudec_obs).flatten()
-            orb_ml_RA  = Orbit(self, 'best', epochs=t_RA)
+            orb_ml_RA = Orbit(self, 'best', epochs=t_RA)
             orb_ml_Dec = Orbit(self, 'best', epochs=t_Dec)
             for i in range(len(self.ep_mualp_obs)):
                 ep_mualp_obs_calendar.append(self.JD_to_calendar(self.ep_mualp_obs[i]))
             for i in range(len(self.ep_mudec_obs)):
                 ep_mudec_obs_calendar.append(self.JD_to_calendar(self.ep_mudec_obs[i]))
 
-            t1_RA  = min(ep_mualp_obs_calendar);  t2_RA  = max(ep_mualp_obs_calendar)
-            dt_RA  = t2_RA - t1_RA
-            t1_Dec = min(ep_mudec_obs_calendar);  t2_Dec = max(ep_mudec_obs_calendar)
+            t1_RA = min(ep_mualp_obs_calendar); t2_RA = max(ep_mualp_obs_calendar)
+            dt_RA = t2_RA - t1_RA
+            t1_Dec = min(ep_mudec_obs_calendar); t2_Dec = max(ep_mudec_obs_calendar)
             dt_Dec = t2_Dec - t1_Dec
             # A Gaia-only source has a single proper-motion epoch, so span the
             # Gaia window (plus margin) rather than a zero-width range.
@@ -1166,7 +1166,7 @@ class OrbitPlots:
             if dt_Dec == 0:
                 half = getattr(self, 'dt_gaia', 2.76)
                 t1_Dec, t2_Dec, dt_Dec = t1_Dec - half, t2_Dec + half, 2 * half
-            xl_RA  = [t1_RA  - dt_RA /8., t2_RA  + dt_RA /8.]
+            xl_RA = [t1_RA - dt_RA /8., t2_RA + dt_RA /8.]
             xl_Dec = [t1_Dec - dt_Dec/8., t2_Dec + dt_Dec/8.]
             for ax in [ax1, ax2, ax_a1]:
                 ax.set_xlim(xl_RA)
@@ -1176,7 +1176,7 @@ class OrbitPlots:
             orb_ml = Orbit(self, 'best')
             minT = min(t1_RA - dt_RA/5., t1_Dec - dt_Dec/5.)
             maxT = max(t2_RA + dt_RA/5., t2_Dec + dt_Dec/5.)
-            T    = np.asarray(self.epoch_calendar)
+            T = np.asarray(self.epoch_calendar)
             indx = (T > minT) * (T < maxT) > 0
 
             # ── random orbit samples ──────────────────────────────────────
@@ -1184,14 +1184,14 @@ class OrbitPlots:
             for i in range(self.num_orbits):
                 orb = Orbit(self, step=self.rand_idx[i])
                 sampled_orbits.append(orb)
-                c   = self.colormap(self.normalize(orb.colorpar))
-                ax1.plot(T[indx], orb.mu_RA[indx],  color=c, alpha=0.3)
+                c = self.colormap(self.normalize(orb.colorpar))
+                ax1.plot(T[indx], orb.mu_RA[indx], color=c, alpha=0.3)
                 ax3.plot(T[indx], orb.mu_Dec[indx], color=c, alpha=0.3)
-                ax2.plot(T[indx], orb.mu_RA[indx]  - orb_ml.mu_RA[indx],  color=c, alpha=0.3)
+                ax2.plot(T[indx], orb.mu_RA[indx] - orb_ml.mu_RA[indx], color=c, alpha=0.3)
                 ax4.plot(T[indx], orb.mu_Dec[indx] - orb_ml.mu_Dec[indx], color=c, alpha=0.3)
 
             # ── best-fit curves ───────────────────────────────────────────
-            ax1.plot(T[indx], orb_ml.mu_RA[indx],  color='black', label=r'Model $\mu(t)$')
+            ax1.plot(T[indx], orb_ml.mu_RA[indx], color='black', label=r'Model $\mu(t)$')
             ax3.plot(T[indx], orb_ml.mu_Dec[indx], color='black', label=r'Model $\mu(t)$')
 
             # Name the proper-motion points after what they are: a Gaia-only NSS
@@ -1220,7 +1220,7 @@ class OrbitPlots:
                         label=pm_data_label)
 
             # ── PM O-C ────────────────────────────────────────────────────
-            dat_OC_RA  = np.array(self.mualp_obs - orb_ml_RA.mu_RA,  dtype=float)
+            dat_OC_RA = np.array(self.mualp_obs - orb_ml_RA.mu_RA, dtype=float)
             dat_OC_Dec = np.array(self.mudec_obs - orb_ml_Dec.mu_Dec, dtype=float)
             if self.have_nss_acc:
                 # The Gaia NSS proper motion is a window mean, so compare it with
@@ -1228,9 +1228,9 @@ class OrbitPlots:
                 mean_RA, mean_Dec = self.model_window_mean_pm('best')
                 h_win = 0.5 * getattr(self, 'dt_gaia', 2.76)
                 ep_dec_c = getattr(self, 'ep_gaia_acc_dec', self.ep_gaia_acc)
-                iG_RA  = int(np.argmin(np.abs(np.asarray(ep_mualp_obs_calendar) - self.ep_gaia_acc)))
+                iG_RA = int(np.argmin(np.abs(np.asarray(ep_mualp_obs_calendar) - self.ep_gaia_acc)))
                 iG_Dec = int(np.argmin(np.abs(np.asarray(ep_mudec_obs_calendar) - ep_dec_c)))
-                dat_OC_RA[iG_RA]   = self.mualp_obs[iG_RA]  - mean_RA
+                dat_OC_RA[iG_RA] = self.mualp_obs[iG_RA] - mean_RA
                 dat_OC_Dec[iG_Dec] = self.mudec_obs[iG_Dec] - mean_Dec
                 ax1.hlines(mean_RA, self.ep_gaia_acc - h_win, self.ep_gaia_acc + h_win,
                            colors='k', linestyles=':', lw=1.8, zorder=298,
@@ -1272,10 +1272,10 @@ class OrbitPlots:
 
             for orb in sampled_orbits:
                 c = self.colormap(self.normalize(orb.colorpar))
-                ax_a1.plot(Tc, _accel_curve(orb.mu_RA),  color=c, alpha=0.3)
+                ax_a1.plot(Tc, _accel_curve(orb.mu_RA), color=c, alpha=0.3)
                 ax_a3.plot(Tc, _accel_curve(orb.mu_Dec), color=c, alpha=0.3)
             ml_curve_RA, ml_curve_Dec = _accel_curve(orb_ml.mu_RA), _accel_curve(orb_ml.mu_Dec)
-            ax_a1.plot(Tc, ml_curve_RA,  color='black',
+            ax_a1.plot(Tc, ml_curve_RA, color='black',
                        label=r'Model $\mathrm{d}\mu/\mathrm{d}t$')
             ax_a3.plot(Tc, ml_curve_Dec, color='black',
                        label=r'Model $\mathrm{d}\mu/\mathrm{d}t$')
@@ -1349,12 +1349,12 @@ class OrbitPlots:
             for ax in [ax4, ax_a3]:
                 ax.set_xlim(xl_Dec)
 
-            ax1.set_ylabel(r'$\mu_{\alpha*}$ (mas yr$^{-1}$)',  labelpad=6, fontsize=13)
-            ax3.set_ylabel(r'$\mu_{\delta}$ (mas yr$^{-1}$)',   labelpad=6, fontsize=13)
-            ax2.set_ylabel('O-C (PM)',                           labelpad=6, fontsize=10)
-            ax4.set_ylabel('O-C (PM)',                           labelpad=6, fontsize=10)
+            ax1.set_ylabel(r'$\mu_{\alpha*}$ (mas yr$^{-1}$)', labelpad=6, fontsize=13)
+            ax3.set_ylabel(r'$\mu_{\delta}$ (mas yr$^{-1}$)', labelpad=6, fontsize=13)
+            ax2.set_ylabel('O-C (PM)', labelpad=6, fontsize=10)
+            ax4.set_ylabel('O-C (PM)', labelpad=6, fontsize=10)
             ax_a1.set_ylabel(r'$\alpha_{\alpha*}$ (mas yr$^{-2}$)', labelpad=6, fontsize=11)
-            ax_a3.set_ylabel(r'$\alpha_{\delta}$ (mas yr$^{-2}$)',  labelpad=6, fontsize=11)
+            ax_a3.set_ylabel(r'$\alpha_{\delta}$ (mas yr$^{-2}$)', labelpad=6, fontsize=11)
 
             for ax in [ax1, ax3, ax2, ax4]:
                 ax.tick_params(labelbottom=False)   # see RV(): a shared NullFormatter would also blank the bottom panel
@@ -1369,7 +1369,7 @@ class OrbitPlots:
                                left=True, right=True, bottom=True, top=True)
                 ax.set_xlabel('Epoch (year)', labelpad=6, fontsize=13)
 
-            y1_RA  = max(np.abs(dat_OC_RA)  + max(self.mualp_obs_err))
+            y1_RA = max(np.abs(dat_OC_RA) + max(self.mualp_obs_err))
             y1_Dec = max(np.abs(dat_OC_Dec) + max(self.mudec_obs_err))
             ax2.set_ylim(-1.2*y1_RA,  1.2*y1_RA)
             ax4.set_ylim(-1.2*y1_Dec, 1.2*y1_Dec)
@@ -1453,7 +1453,7 @@ class OrbitPlots:
                          color=self.colormap(self.normalize(orb.colorpar)), alpha=0.3)
                 ax2.plot(self.epoch_calendar, orb.mu_Dec,
                          color=self.colormap(self.normalize(orb.colorpar)), alpha=0.3)
-            ax1.plot(self.epoch_calendar, orb_ml.mu_RA,  color='black')
+            ax1.plot(self.epoch_calendar, orb_ml.mu_RA, color='black')
             ax2.plot(self.epoch_calendar, orb_ml.mu_Dec, color='black')
             for ax, ylabel in [(ax1, r'$\mu_{\alpha*}$ (mas yr$^{-1}$)'),
                                (ax2, r'$\mu_{\delta}$ (mas yr$^{-1}$)')]:
@@ -1618,7 +1618,7 @@ class OrbitPlots:
         
         # in corner_modified, the error is modified to keep 2 significant figures
         figure = corner_modified.corner(chain, labels=labels, quantiles=[0.16, 0.5, 0.84], range=[0.999 for l in labels], verbose=False, show_titles=True,
-                                        title_kwargs={"fontsize": 12}, hist_kwargs={"lw":1.}, label_kwargs={"fontsize":15}, xlabcord=(0.5,-0.45), ylabcord=(-0.45,0.5),  **kwargs)
+                                        title_kwargs={"fontsize": 12}, hist_kwargs={"lw":1.}, label_kwargs={"fontsize":15}, xlabcord=(0.5,-0.45), ylabcord=(-0.45,0.5), **kwargs)
 
         print("Plotting Corner plot, your plot is generated at " + self.outputdir)
         plt.savefig(os.path.join(self.outputdir, 'Corner_' + self.title)+'.pdf', transparent=True)

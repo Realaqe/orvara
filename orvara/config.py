@@ -188,14 +188,6 @@ NSS_SCHEMA = {
         Key('corr_vec', 'floats', required=True,
             doc='Gaia NSS corr_vec: 21 numbers for npar=7, 36 for npar=9.'),
     ],
-    'gaia_accel_rv': [
-        Key('file', 'path',
-            doc='CSV with epoch(JD), rv(m/s), rv_err(m/s)[, instrument].'),
-    ],
-    'gaia_accel_relast': [
-        Key('file', 'path',
-            doc='CSV with epoch(JD), sep(mas), pa(deg), sep_err, pa_err.'),
-    ],
 }
 
 SCHEMA = {**FIT_SCHEMA, **NSS_SCHEMA}
@@ -209,7 +201,7 @@ _LEGACY_MAP = {
     ('advanced', 'error_inflation_factor'): 'error_inflation_factor',
     ('advanced', 'mode'): 'mode',
 }
-_LEGACY_SECTIONS = {'paths', 'star', 'advanced', 'gaia_solution', 'rv', 'relast'}
+_LEGACY_SECTIONS = {'paths', 'star', 'advanced', 'gaia_solution'}
 
 
 def _read(path):
@@ -366,14 +358,7 @@ def _gather_nss_raw(config):
         for name, value in config.items('gaia_accel'):
             raw[name.lower()] = value
 
-    files = {}
-    for section, alias in (('rv', 'rv'), ('gaia_accel_rv', 'rv'),
-                           ('relast', 'relast'), ('gaia_accel_relast', 'relast')):
-        if config.has_section(section):
-            value = config.get(section, 'file', fallback='').strip()
-            if value:
-                files[alias] = value
-    return raw, files
+    return raw
 
 
 def nss_settings(config, path='<config>'):
@@ -386,7 +371,7 @@ def nss_settings(config, path='<config>'):
     :returns: dict of fully-typed, validated values.
     :raises ConfigError: listing every problem found, not just the first.
     """
-    raw, files = _gather_nss_raw(config)
+    raw = _gather_nss_raw(config)
     if not raw:
         raise ConfigError(
             f'{path} contains no Gaia NSS block. Add a [gaia_accel] section '
@@ -431,8 +416,6 @@ def nss_settings(config, path='<config>'):
         'rv': get('rv', 'float', default=np.nan),
         'rv_err': get('rv_err', 'float', default=np.nan),
         'rv_source': (raw.get('rv_source') or '').strip(),
-        'rv_file': files.get('rv'),
-        'relast_file': files.get('relast'),
     }
 
     for name in ('ra', 'dec', 'parallax', 'pmra', 'pmdec', 'accra', 'accdec'):
@@ -464,10 +447,6 @@ def nss_settings(config, path='<config>'):
     if mode == 'hip_and_gaia' and not out['hgca_template']:
         errors.append('[gaia_accel] mode = hip_and_gaia needs hgca_template to point '
                       'at the full HGCA catalogue that holds the Hipparcos data.')
-    for name in ('rv_file', 'relast_file'):
-        value = out[name]
-        if value and not os.path.exists(value):
-            errors.append(f'[gaia_accel] {name} = {value!r} does not exist.')
 
     if errors:
         raise ConfigError(f'{len(errors)} problem(s) in the Gaia NSS block of '

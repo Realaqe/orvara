@@ -25,20 +25,21 @@ overwrite each other's files.
 
 Installation
 ============
-Cython is declared as a build requirement, so a modern pip or uv installs it
+htof >= 1.2.0 is required and is not yet on PyPI (which has 1.1.5), so
+install it from GitHub first; then clone orvara and install it. Cython is
+declared as a build requirement, so a modern pip or uv fetches it
 automatically:
 
 .. code-block:: bash
 
+    pip install "htof @ git+https://github.com/gmbrandt/HTOF@1.2.0"
     git clone https://github.com/t-brandt/orvara
     cd orvara
     pip install -e ".[test]"
 
-If you use an older pip that does not honour ``pyproject.toml`` build
+Once htof 1.2.0 is released on PyPI, ``pip install htof`` replaces the first
+line. If you use an older pip that does not honour ``pyproject.toml`` build
 requirements, install Cython first (``pip install "cython>=3"``).
-
-htof must be installed too; if you are using the matching modernised htof, do
-``pip install -e ../htof`` before installing orvara.
 
 Verifying
 ---------

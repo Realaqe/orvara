@@ -67,6 +67,10 @@
   tables to the FITS file that `fit_orbit` never read; the fit reads `RVFile` and
   `AstrometryFile` as before. Half-baselines `h_H`, `h_G` defined once in
   `Data.__init__`; alignment whitespace around `=` removed.
+- `fit_orbit` and `plot_orbit` create `--output-dir` if it does not exist
+  (previously `plot_orbit` failed with `FileNotFoundError`; the README example
+  pointed at the removed `orvara/tests/plots/`). README: htof install line
+  points at the 1.2.1 tag (same code as 1.2.0).
 
 - Verified on 2026-10-05: Python 3.12.14, NumPy 2.5.3, SciPy 1.18.1, Astropy 8.0.1.
   59 unit tests and 4 end-to-end tests pass. Sdist and wheel pass `twine check` and

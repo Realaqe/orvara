@@ -550,6 +550,7 @@ def parse_args():
     args = parser.parse_args()
     if args.output_dir is None:
         args.output_dir = os.getcwd()
+    os.makedirs(args.output_dir, exist_ok=True)
     return args
 
 
@@ -568,4 +569,5 @@ def parse_args_plotting():
     args = parser.parse_args()
     if args.output_dir is None:
         args.output_dir = os.getcwd()
+    os.makedirs(args.output_dir, exist_ok=True)
     return args

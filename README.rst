@@ -32,13 +32,12 @@ automatically:
 
 .. code-block:: bash
 
-    pip install "htof @ git+https://github.com/gmbrandt/HTOF@1.2.0"
+    pip install "htof @ git+https://github.com/gmbrandt/HTOF@1.2.1"
     git clone https://github.com/t-brandt/orvara
     cd orvara
     pip install -e ".[test]"
 
-Once htof 1.2.0 is released on PyPI, ``pip install htof`` replaces the first
-line. If you use an older pip that does not honour ``pyproject.toml`` build
+If you use an older pip that does not honour ``pyproject.toml`` build
 requirements, install Cython first (``pip install "cython>=3"``).
 
 Verifying
